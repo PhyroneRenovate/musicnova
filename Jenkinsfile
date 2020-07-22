@@ -1,6 +1,9 @@
 pipeline {
-    agent any
-
+    agent {
+        docker {
+            image 'registry-lab.phyrone.de:443/phyrone/gradle-with-node-docker:jdk11'
+        }
+    }
     stages {
         stage("Clean") {
             steps {
