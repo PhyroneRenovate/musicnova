@@ -1,0 +1,214 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.moowork.gradle.node.npm.NpmTask
+import com.github.ksoichiro.build.info.BuildInfoExtension
+
+plugins {
+    id("org.springframework.boot") version "2.3.1.RELEASE"
+    id("io.spring.dependency-management") version "1.0.9.RELEASE"
+    id("com.moowork.node") version "1.3.1"
+    id("org.jetbrains.dokka") version "0.10.1"
+    id("com.github.ksoichiro.build.info") version "0.2.0"
+
+    val KOTLIN_VERSION = "1.3.72"
+    kotlin("jvm") version KOTLIN_VERSION
+    kotlin("kapt") version KOTLIN_VERSION
+    kotlin("plugin.spring") version KOTLIN_VERSION
+    kotlin("plugin.jpa") version KOTLIN_VERSION
+}
+
+group = "eu.musicnova"
+version = "0.0.1-SNAPSHOT"
+java.sourceCompatibility = JavaVersion.VERSION_11
+
+repositories {
+
+}
+allprojects {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven("https://jitpack.io/")
+        maven("https://repo.phyrone.de/repository/j2v8-mirror/")
+        maven("https://libraries.minecraft.net")
+        maven("https://dl.bintray.com/s1m0nw1/KtsRunner")
+        maven("https://oss.sonatype.org/content/repositories/snapshots")
+    }
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-batch")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.springframework.boot:spring-boot-starter-quartz")
+    implementation("org.springframework.boot:spring-boot-starter-rsocket")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+
+    //implementation("org.springframework.shell:spring-shell-starter:2.0.0.RELEASE")
+
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("org.springframework.boot:spring-boot-configuration-processor")
+
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    //implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+
+    implementation("com.github.lalyos:jfiglet:0.0.8")
+
+    implementation(project(":musicnova-shared"))
+    kapt("org.springframework.boot:spring-boot-configuration-processor")
+    implementation("org.fusesource.jansi:jansi:1.18")
+    compile(group = "com.uchuhimo", name = "konf", version = "0.22.1")
+    runtimeOnly("com.h2database:h2")
+    runtimeOnly("mysql:mysql-connector-java")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+    }
+    testImplementation("io.projectreactor:reactor-test")
+    testImplementation("org.springframework.batch:spring-batch-test")
+
+
+    implementation("info.picocli:picocli:4.4.0")
+    kapt("info.picocli:picocli-codegen:4.4.0")
+
+    implementation("com.github.oshi:oshi-core:5.2.0")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.11.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+")
+    implementation("com.google.zxing:core:3.4.0")
+    implementation("org.greenrobot:eventbus:3.2.0")
+    //implementation("com.github.pemistahl:lingua:1.0.1")
+    implementation("de.sfuhrm:radiobrowser4j:2.0.2")
+    implementation("me.tongfei:progressbar:0.8.1")
+    implementation("com.sedmelluq:lavaplayer:1.3.50")
+    implementation("com.github.theholywaffle:teamspeak3-api:1.2.0")
+    implementation("com.github.manevolent:ts3j:1.0.1")
+    implementation("net.dv8tion:JDA:4.2.0_178")
+    implementation("com.github.Phyrone:brigardier-kotlin:1.3.3")
+    implementation("com.zaxxer:HikariCP:3.4.5")
+    implementation("org.xeustechnologies:jcl-core:2.8")
+    implementation("io.sentry:sentry-spring:1.7.30")
+    implementation("de.vandermeer:asciitable:0.3.2")
+    implementation("com.github.excitement-engineer:ktor-graphql:2.0.0") {
+        exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
+    }
+    implementation("com.tgirard12:graphql-kotlin-dsl:1.2.0") {
+        exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
+    }
+    implementation("com.github.papsign:Ktor-OpenAPI-Generator:0.2-beta.2-experimental")
+
+    listOf(
+            "ktor-server-netty",
+            "ktor-html-builder",
+            "ktor-websockets",
+            "ktor-jackson"
+    ).forEach { name ->
+        implementation("io.ktor", name, "1.3.2")
+    }
+
+    listOf("exposed-core", "exposed-dao", "exposed-jdbc", "exposed-jodatime", "exposed-java-time").forEach { name ->
+        implementation("org.jetbrains.exposed", name, "0.24.1")
+    }
+
+    kapt("org.inferred:freebuilder:2.6.1")
+    implementation("org.inferred:freebuilder:2.6.1")
+
+    implementation("org.jline:jline:3.16.0")
+    implementation("net.java.dev.jna:jna:5.6.0")
+
+    implementation("com.eclipsesource.j2v8:j2v8_linux_x86_64:6.2.0")
+    implementation("com.eclipsesource.j2v8:j2v8_win32_x86_64:4.6.0")
+    implementation("com.eclipsesource.j2v8:j2v8_macosx_x86_64:4.6.0")
+    implementation("com.eclipsesource.j2v8:j2v8_win32_x86:4.6.0")
+    implementation("org.python:jython:2.7.2")
+    implementation("org.luaj:luaj-jse:3.0.1")
+    implementation("de.swirtz:ktsRunner:0.0.8")
+    implementation("com.zaxxer:nuprocess:2.0.0")
+    implementation("com.google.guava:guava:29.0-jre")
+    implementation("org.jgrapht:jgrapht-core:1.5.0")
+    implementation("com.jcabi:jcabi-manifests:1.1")
+    implementation("com.google.jimfs:jimfs:1.1")
+    implementation("com.google.auto.factory:auto-factory:1.0-beta8")
+    kapt("com.google.auto.factory:auto-factory:1.0-beta8")
+    implementation("com.google.auto.service:auto-service:1.0-rc7")
+    kapt("com.google.auto.service:auto-service:1.0-rc7")
+
+}
+tasks {
+
+
+    withType<Test> {
+        useJUnitPlatform()
+    }
+
+    withType<KotlinCompile> {
+        kotlinOptions {
+            freeCompilerArgs = listOf("-Xjsr305=strict")
+            jvmTarget = "11"
+        }
+    }
+    create("first-install") {
+        dependsOn("npmInstall")
+    }
+    create("copy-web-files") {
+        dependsOn("pre-copy-web-files", "copy-kotlin-js", "copy-assets")
+    }
+    create("pre-copy-web-files") {
+        dependsOn(JavaPlugin.PROCESS_RESOURCES_TASK_NAME)
+    }
+    create<NpmTask>("build-webpack") {
+        setArgs(listOf("run", "webpack"))
+    }
+    create<Copy>("copy-assets") {
+        dependsOn("pre-copy-web-files", "build-webpack")
+        from("${buildDir.path}/webpack/assets/")
+        into("${buildDir.path}/resources/main/web/assets/")
+    }
+    create<Copy>("copy-kotlin-js") {
+        val frontendProject = project(":musicnova-frontend")
+        dependsOn(":musicnova-frontend:browserProductionWebpack", "pre-copy-web-files")
+        from("${frontendProject.buildDir.path}/distributions/")
+        into("${buildDir.path}/resources/main/web/assets/js/")
+
+    }
+    classes {
+        dependsOn("copy-web-files")
+    }
+    springBoot {
+        buildInfo()
+    }
+
+    bootJar {
+        manifest {
+            attributes["BootJAR"] = true
+            attributes["Title"] = "Musicnova"
+            attributes["Implementation-Version"] = project.version.toString()
+        }
+    }
+    dokka {
+        outputFormat = "html"
+        outputDirectory = "$buildDir/javadoc"
+    }
+}
+node {
+    version = "12.18.2"
+    // Base URL for fetching node distributions (change if you have a mirror).
+    distBaseUrl = "https://nodejs.org/dist"
+
+    // If true, it will download node using above parameters.
+    // If false, it will try to use globally installed node.
+    download = false
+
+    // Set the work directory for unpacking node
+    workDir = file("${project.buildDir}/nodejs")
+
+    nodeModulesDir = file("src/main/web")
+}
+buildInfo {
+    manifestEnabled = true
+    gitPropertiesEnabled = true
+    gitInfoMode = BuildInfoExtension.MODE_DEFAULT
+}
