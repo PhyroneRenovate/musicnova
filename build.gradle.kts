@@ -3,6 +3,8 @@ import com.moowork.gradle.node.npm.NpmTask
 import com.github.ksoichiro.build.info.BuildInfoExtension
 
 plugins {
+    idea
+    java
     id("org.springframework.boot") version "2.3.1.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("com.moowork.node") version "1.3.1"
@@ -211,4 +213,8 @@ buildInfo {
     manifestEnabled = true
     gitPropertiesEnabled = true
     gitInfoMode = BuildInfoExtension.MODE_DEFAULT
+}
+
+idea{
+
 }
