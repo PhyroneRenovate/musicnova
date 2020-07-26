@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: 11
-      - run: chown +x gradlew
+      - run: chmod +x gradlew
         name: "Set Permissions"
       - run: ./gradlew clean
         name: "Clean"
