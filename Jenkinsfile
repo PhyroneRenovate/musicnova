@@ -27,8 +27,4 @@ pipeline {
         }
 
     }
-    tools{
-        jdk 'openjdk11'
-        gradle 'gradle5'
-    }
 }
