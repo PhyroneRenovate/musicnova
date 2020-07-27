@@ -6,17 +6,18 @@ package eu.musicnova.musicnova
 import eu.musicnova.musicnova.boot.MusicnovaApplicationCommandLine
 import eu.musicnova.musicnova.utils.MnRepositoryImpl
 import org.fusesource.jansi.AnsiConsole
-import org.luaj.vm2.lib.jse.JsePlatform
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
+import org.springframework.scheduling.annotation.EnableScheduling
 import picocli.CommandLine
 import java.io.File
 
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MnRepositoryImpl::class)
-class MusicnovaApplication{
+@EnableScheduling
+class MusicnovaApplication {
 
-    companion object Static{
+    companion object Static {
         @JvmStatic
         fun main(args: Array<String>) {
             AnsiConsole.systemInstall()

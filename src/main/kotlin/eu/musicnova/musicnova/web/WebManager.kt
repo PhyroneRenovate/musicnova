@@ -38,6 +38,7 @@ class WebManager {
 
     @Bean
     fun ktorServer(appEnv: ApplicationEngineEnvironment) = embeddedServer(Netty, appEnv) {
+        this.shareWorkGroup = true
 
     }
 
@@ -64,7 +65,6 @@ class WebManager {
         logger.info("Stopping WebServer...")
         engine.stop(1000, 3000)
     }
-
 
 
 }

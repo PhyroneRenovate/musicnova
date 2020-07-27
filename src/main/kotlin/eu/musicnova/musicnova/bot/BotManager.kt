@@ -14,8 +14,10 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.util.*
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
+import kotlin.collections.HashSet
 
 @Component
 class BotManager {
@@ -43,6 +45,9 @@ class BotManager {
     fun findBot(name: String): Bot? = bots.find { bot -> name.equals(bot.uuid.toString(), true) }
             ?: bots.find { bot -> name.equals(bot.name, true) }
 
+    fun findBot(uuid: UUID,subID:Long?) : Bot? {
+        TODO()
+    }
 
     private val botNameArg = "UUIDorUsername"
     fun CommandContext<Unit>.getBot() = findBot(getArgument(botNameArg))

@@ -5,6 +5,10 @@ import com.github.manevolent.ts3j.util.Ts3Crypt
 import eu.musicnova.musicnova.bot.teamspeak.TeamspeakBotManager
 import eu.musicnova.musicnova.bot.teamspeak.TeamspeakClientProtocolVersion
 import eu.musicnova.musicnova.utils.MnRepository
+import org.hibernate.annotations.Cache
+import org.hibernate.annotations.CacheConcurrencyStrategy
+import org.springframework.data.jpa.repository.Modifying
+import java.time.LocalDateTime
 import java.util.*
 import javax.persistence.*
 
@@ -103,6 +107,7 @@ data class PeristentAudioTrackData(
 )
 
 @Entity
+@Table(name = "web_user")
 data class PersistentWebUserData(
         var username: String,
         var password: ByteArray,
@@ -137,12 +142,32 @@ data class PersistentWebUserData(
 }
 
 @Entity
+@Table(name = "web_user_session")
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 data class PersistentWebUserSessionData(
         @Column(length = 512) @Id val sessionToken: String,
-        @ManyToOne var webUser: PersistentWebUserData
+        @ManyToOne var webUser: PersistentWebUserData,
+        var lastSeenDate: LocalDateTime,
+        var loginDate: LocalDateTime
 )
 
-interface WebUserSessionDatabase : MnRepository<PersistentWebUserData, String>
+interface WebUserSessionDatabase : MnRepository<PersistentWebUserSessionData, String> {
+    @Modifying
+    fun deleteByLastSeenDateAfter(deadLine: LocalDateTime)
+
+    @Modifying
+    fun deleteByLastSeenDateBefore(deadLine: LocalDateTime)
+
+    @Modifying
+    fun deleteByLoginDateAfter(deadLine: LocalDateTime)
+
+    @Modifying
+    fun deleteByLoginDateBefore(deadLine: LocalDateTime)
+
+    @Modifying
+    fun deleteBySessionToken(token: String)
+}
+
 interface WebUserDatabase : MnRepository<PersistentWebUserData, UUID>
 
 interface AudioContollerDatabase : MnRepository<PersistentAudioControllerData, UUID>

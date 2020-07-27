@@ -1,41 +1,54 @@
 package eu.musicnova.musicnova.web.modules
 
-import com.google.common.primitives.Bytes
-import eu.musicnova.musicnova.database.jpa.PersistentWebUserData
+import eu.musicnova.musicnova.bot.Bot
+import eu.musicnova.musicnova.bot.BotManager
+import eu.musicnova.musicnova.database.jpa.PersistentWebUserSessionData
 import eu.musicnova.musicnova.module.WebModule
-import eu.musicnova.shared.SharedConst
-import eu.musicnova.shared.WsPacket
-import eu.musicnova.shared.WsPacketHead
-import eu.musicnova.shared.WsPacketSerializer
+import eu.musicnova.musicnova.web.auth.WebSessionAuthManager
+import eu.musicnova.shared.*
 import io.ktor.application.Application
-import io.ktor.http.cio.websocket.DefaultWebSocketSession
-import io.ktor.http.cio.websocket.Frame
+import io.ktor.application.call
+import io.ktor.http.ContentType
+import io.ktor.http.cio.websocket.*
+import io.ktor.request.receive
+import io.ktor.response.respondBytes
 import io.ktor.routing.post
-import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.websocket.webSocket
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class WiCommunicationWebModule : WebModule {
 
+    @Autowired
+    lateinit var webSessionAuthManager: WebSessionAuthManager
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
     override fun Application.invoke() {
         routing {
-
-            put(SharedConst.SOCKET_PATH) {
-
+            post(SharedConst.INTERNAL_LOGIN_PATH) {
+                val requestBytes = call.receive<ByteArray>()
+                val request = protoBuf.load(PacketLoginRequest.serializer(), requestBytes)
+                println(request)
+                val response = PacketLoginResponse(LoginStatus.BLOCKED)
+                call.respondBytes(protoBuf.dump(PacketLoginResponse.serializer(), response), ContentType.Application.ProtoBuf)
             }
-            post(SharedConst.SOCKET_PATH) {
 
+            post(SharedConst.SOCKET_PATH) {
+                TODO("implement")
             }
             webSocket(SharedConst.SOCKET_PATH) {
-                for (frame in incoming) {
-                    if (frame is Frame.Binary) {
-                        val bytes = frame.data
-                        launch {
+                with(webSessionAuthManager) {
 
-                        }
+                    val session = call.getUserSession()
+                    if (session != null) {
+                        WebSocketCommunicationAdapter(this@webSocket, session).start()
+                    } else {
+                        close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "login first"))
                     }
                 }
             }
@@ -43,13 +56,82 @@ class WiCommunicationWebModule : WebModule {
     }
 
 
-    interface CommunicationAdapter{
-        suspend fun pushEvent(event: WsPacket)
+    interface CommunicationAdapter {
+        suspend fun start()
+        suspend fun stop()
+        suspend fun sendPacket(event: WsPacket)
     }
 
-    interface CommunicationSession {
+    inner class WebSocketCommunicationAdapter(
+            private val webSocket: DefaultWebSocketSession,
+            private val loginSession: PersistentWebUserSessionData
+    ) : CommunicationAdapter {
+        private val session: CommunicationSession = CommunicationSession(this, loginSession)
+        override suspend fun start() {
+            coroutineScope {
+                launch { webSocket.listener() }
 
-        suspend fun pushEvent(event: WsPacket)
+            }
+        }
+
+        private suspend fun DefaultWebSocketSession.listener() {
+            for (frame in incoming) {
+                if (frame is Frame.Binary) {
+                    val bytes = frame.data
+                    launch {
+                        runCatching { handlePacket(bytes) }.getOrElse {
+                            logger.warn("handling websocket packet failed", it)
+                        }
+                    }
+                }
+            }
+        }
+
+        private suspend fun handlePacket(packetBytes: ByteArray) {
+            val packet = WsPacketSerializer.deserialize(packetBytes)
+            session.onPacket(packet)
+        }
+
+
+        override suspend fun stop() {
+            webSocket.close()
+        }
+
+        override suspend fun sendPacket(event: WsPacket) {
+            webSocket.send(WsPacketSerializer.serialize(event))
+        }
+    }
+
+    @Autowired
+    lateinit var botManager: BotManager
+
+    inner class CommunicationSession(
+            private val adapter: CommunicationAdapter,
+            private val session: PersistentWebUserSessionData
+    ) {
+
+        private var currentBot: Bot? = null
+
+        private fun BotManager.findBot(identifier: BotIdentifier) = findBot(identifier.uuid, identifier.subID)
+        private fun handleSwitchBot(packet: WsPacketUpdateSelectedBot) {
+            val identifier = packet.bitIdentifier
+            if (identifier != null) {
+                currentBot = botManager.findBot(identifier)
+            }
+        }
+
+        private suspend fun handlePacketClose(packet: WsPacketClose) {
+            adapter.stop()
+        }
+
+        suspend fun onPacket(packet: WsPacket) {
+            when (packet) {
+                is WsPacketClose -> handlePacketClose(packet)
+                is WsPacketBotPlayerPlayStream -> TODO()
+                is WsPacketBotPlayerUpdateVolume -> TODO()
+                is WsPacketUpdateSelectedBot -> TODO()
+            }
+        }
     }
 
 }

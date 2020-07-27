@@ -88,6 +88,18 @@ class BotListenerAdapter : BotEventListener {
     override fun onStatusChange() {
         listenerList.forEachExisting { onStatusChange() }
     }
+
+    override fun onPlayerContinationUpdate() {
+        listenerList.forEachExisting { onPlayerContinationUpdate() }
+    }
+
+    override fun onPlayerTrackUpdate() {
+        listenerList.forEachExisting { onPlayerTrackUpdate() }
+    }
+
+    override fun onVolumeUpdate() {
+        listenerList.forEachExisting { onVolumeUpdate() }
+    }
 }
 
 @NoRepositoryBean

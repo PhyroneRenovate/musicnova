@@ -13,13 +13,16 @@ import de.phyrone.brig.wrapper.StringArgument
 import de.phyrone.brig.wrapper.getArgument
 import de.phyrone.brig.wrapper.literal
 import de.phyrone.brig.wrapper.runs
-import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import eu.musicnova.musicnova.audio.MusicNovaAudioProvider
-import eu.musicnova.musicnova.bot.*
+import eu.musicnova.musicnova.bot.BotEventListener
+import eu.musicnova.musicnova.bot.BotManager
+import eu.musicnova.musicnova.bot.TeamspeakBot
+import eu.musicnova.musicnova.bot.TerminalConfigurable
 import eu.musicnova.musicnova.database.jpa.PersistentTeamspeakBotData
 import eu.musicnova.musicnova.database.jpa.PersistentTeamspeakIdentity
 import eu.musicnova.musicnova.database.jpa.TeamspeakBotDatabase
 import eu.musicnova.musicnova.utils.BotListenerAdapter
+import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import eu.musicnova.musicnova.utils.ioTask
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -27,8 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
-import org.springframework.web.bind.annotation.PostMapping
-import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URL
 import java.util.*

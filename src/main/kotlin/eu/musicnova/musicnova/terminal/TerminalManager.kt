@@ -158,7 +158,7 @@ class TerminalCompleter : Completer, Highlighter {
 
         val splited = buffer.split(" ")
         val latestWord = splited.lastOrNull()?.takeUnless { it.isBlank() }
-        val parsed = dispatcher.parse(buffer, Unit)
+        val parsed = dispatcher.parse(buffer.trimEnd(), Unit)
 
         if (latestWord != null) {
             runCatching {
@@ -179,7 +179,7 @@ class TerminalCompleter : Completer, Highlighter {
             }
         }
 
-        return if (parsed.context.nodes.isEmpty())
+        return if (/*parsed.context.nodes.isEmpty() */parsed.reader.canRead())
             AttributedString(buffer, AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
         else AttributedString(buffer, AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN))
     }

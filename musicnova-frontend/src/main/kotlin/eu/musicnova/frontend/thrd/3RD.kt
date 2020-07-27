@@ -1,4 +1,4 @@
-package eu.musicnova.frontend
+package eu.musicnova.frontend.thrd
 
 @JsModule("sweetalert2")
 @JsNonModule
