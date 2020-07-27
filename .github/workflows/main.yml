@@ -14,15 +14,12 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: 11
-      - uses: actions/setup-node@v2-beta
-        with:
-          node-version: '12'
       - run: chmod +x gradlew
         name: "Set Permissions"
       - run: ./gradlew clean
         name: "Clean"
       - run: ./gradlew first-install
-        name: "Setup Gradle ENV"
+        name: "Prepare Build"
       - run: ./gradlew bootJar
         name: "Boot JAR"
       - uses: actions/upload-artifact@v2

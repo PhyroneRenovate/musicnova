@@ -7,7 +7,7 @@ plugins {
     java
     id("org.springframework.boot") version "2.3.1.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
-    id("com.moowork.node") version "1.3.1"
+    id("com.github.node-gradle.node") version "2.2.4"
     id("org.jetbrains.dokka") version "0.10.1"
     id("com.github.ksoichiro.build.info") version "0.2.0"
 
@@ -38,10 +38,10 @@ allprojects {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-batch")
+    //implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-mail")
-    implementation("org.springframework.boot:spring-boot-starter-quartz")
-    implementation("org.springframework.boot:spring-boot-starter-rsocket")
+    //implementation("org.springframework.boot:spring-boot-starter-quartz")
+    //implementation("org.springframework.boot:spring-boot-starter-rsocket")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
@@ -195,14 +195,11 @@ tasks {
         outputDirectory = "$buildDir/javadoc"
     }
 }
-node {
-    version = "12.18.2"
-    // Base URL for fetching node distributions (change if you have a mirror).
-    distBaseUrl = "https://nodejs.org/dist"
 
-    // If true, it will download node using above parameters.
-    // If false, it will try to use globally installed node.
-    download = false
+node {
+    version = "12.18.3"
+
+    download = true
 
     // Set the work directory for unpacking node
     workDir = file("${project.buildDir}/nodejs")
@@ -215,6 +212,6 @@ buildInfo {
     gitInfoMode = BuildInfoExtension.MODE_DEFAULT
 }
 
-idea{
+idea {
 
 }
