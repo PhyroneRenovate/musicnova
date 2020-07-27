@@ -6,7 +6,7 @@ on:
     branches: [ master ]
 
 jobs:
-  clean:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,5 +25,7 @@ jobs:
         name: "Setup Gradle ENV"
       - run: ./gradlew bootJar
         name: "Boot JAR"
-        
-  
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Bot
+          path: build/libs/*.jar
