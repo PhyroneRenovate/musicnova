@@ -66,7 +66,7 @@ class WebSessionAuthManager {
 
     fun ApplicationCall.createSession(user: PersistentWebUserData): PersistentWebUserSessionData {
         val session = createSessionObject(user)
-        response.cookies.append(sessionName, session.sessionToken, cookieEncoding)
+        response.cookies.append(sessionName, session.sessionToken, cookieEncoding, path = "/")
         return session
     }
 
@@ -122,13 +122,7 @@ class WebSessionAuthManager {
     fun registerSessionCOmmands() {
         terminalCommandDispatcher.literal("web") {
             literal("session") {
-                literal("testOne") {
-                    runs {
-                        val testUser = PersistentWebUserData("test", byteArrayOf(), byteArrayOf(), UUID.randomUUID())
-                        webUserDatabase.save(testUser)
-                        createSessionObject(testUser)
-                    }
-                }
+
             }
         }
     }

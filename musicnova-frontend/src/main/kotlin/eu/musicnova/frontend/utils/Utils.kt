@@ -2,11 +2,14 @@ package eu.musicnova.frontend.utils
 
 
 import eu.musicnova.shared.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.khronos.webgl.Uint8Array
 import org.w3c.dom.HTMLElement
+import org.w3c.dom.HTMLLinkElement
 import org.w3c.dom.WebSocket
 import org.w3c.dom.get
 import org.w3c.xhr.ARRAYBUFFER
@@ -45,10 +48,10 @@ inline fun newBody() = (document.body?.also { it.innerHTML = "" }
 
 val pageStartData by lazy { loadPageStartData() }
 
-@OptIn(ExperimentalStdlibApi::class)
 private fun loadPageStartData(): PageStartData {
     val pageStartBaseString = window[SharedConst.START_DATA_FIELD] as String
     val pageStartBytes = window.atob(pageStartBaseString)
+    @OptIn(ExperimentalStdlibApi::class)
     return protoBuf.load(PageStartData.serializer(), pageStartBytes.encodeToByteArray())
 }
 
@@ -73,4 +76,11 @@ suspend inline fun <reified REQ, reified RES> postRequest(url: String, request: 
     httpRequest.open("POST", url)
 
     httpRequest.send(protoBuf.dump(requestSerializer, request))
+}
+
+private val styleLink by lazy { document.getElementById(SharedConst.STYLE_LINK_ID) as HTMLLinkElement }
+fun setTheme(theme: WebTheme) {
+    println("switch to theme ${theme.name} with url ${theme.fullPath}")
+    GlobalScope.launch { postRequest(SharedConst.INTERNAL_SET_THEME_PATH, ChangeThemeRequest(theme), ChangeThemeRequest.serializer(), EmptyObject.serializer()) }
+    styleLink.href = theme.fullPath
 }

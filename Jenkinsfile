@@ -10,11 +10,6 @@ pipeline {
                 sh "gradle clean"
             }
         }
-        stage("Prepare") {
-            steps {
-                sh "gradle first-install"
-            }
-        }
         stage("BootJar") {
             steps {
                 sh "gradle bootJar"

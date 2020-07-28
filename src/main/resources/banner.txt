@@ -7,3 +7,4 @@ ${AnsiColor.BRIGHT_RED}
 
     ${AnsiColor.CYAN}Version:  ${AnsiColor.GREEN}${application.version}
     ${AnsiColor.CYAN}SpringBoot: ${AnsiColor.GREEN}${spring-boot.version}
+${AnsiColor.DEFAULT}

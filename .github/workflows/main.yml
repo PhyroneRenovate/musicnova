@@ -18,8 +18,6 @@ jobs:
         name: "Set Permissions"
       - run: ./gradlew clean
         name: "Clean"
-      - run: ./gradlew first-install
-        name: "Prepare Build"
       - run: ./gradlew bootJar
         name: "Boot JAR"
       - uses: actions/upload-artifact@v2

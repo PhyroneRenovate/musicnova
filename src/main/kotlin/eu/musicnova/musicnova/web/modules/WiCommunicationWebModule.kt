@@ -5,6 +5,7 @@ import eu.musicnova.musicnova.bot.BotManager
 import eu.musicnova.musicnova.database.jpa.PersistentWebUserSessionData
 import eu.musicnova.musicnova.module.WebModule
 import eu.musicnova.musicnova.web.auth.WebSessionAuthManager
+import eu.musicnova.musicnova.web.auth.WebUserLoginManager
 import eu.musicnova.shared.*
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -14,6 +15,9 @@ import io.ktor.request.receive
 import io.ktor.response.respondBytes
 import io.ktor.routing.post
 import io.ktor.routing.routing
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
+import io.ktor.sessions.set
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -27,15 +31,30 @@ class WiCommunicationWebModule : WebModule {
     @Autowired
     lateinit var webSessionAuthManager: WebSessionAuthManager
 
+    @Autowired
+    lateinit var webUserAuthManager: WebUserLoginManager
+
     private val logger = LoggerFactory.getLogger(this::class.java)
     override fun Application.invoke() {
         routing {
             post(SharedConst.INTERNAL_LOGIN_PATH) {
                 val requestBytes = call.receive<ByteArray>()
                 val request = protoBuf.load(PacketLoginRequest.serializer(), requestBytes)
-                println(request)
-                val response = PacketLoginResponse(LoginStatus.BLOCKED)
+                val user = webUserAuthManager[request.username]
+
+                val response = if (user?.checkPassword(request.password) == true) {
+                    with(webSessionAuthManager) { call.createSession(user) }
+                    PacketLoginResponse(LoginStatusResponse.VALID)
+                } else {
+                    PacketLoginResponse(LoginStatusResponse.INVALID)
+                }
+
                 call.respondBytes(protoBuf.dump(PacketLoginResponse.serializer(), response), ContentType.Application.ProtoBuf)
+            }
+            post(SharedConst.INTERNAL_SET_THEME_PATH) {
+                val request = protoBuf.load(ChangeThemeRequest.serializer(), call.receive())
+                call.sessions.set(request.newTheme)
+                call.respondBytes(protoBuf.dump(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
             }
 
             post(SharedConst.SOCKET_PATH) {
@@ -114,7 +133,7 @@ class WiCommunicationWebModule : WebModule {
 
         private fun BotManager.findBot(identifier: BotIdentifier) = findBot(identifier.uuid, identifier.subID)
         private fun handleSwitchBot(packet: WsPacketUpdateSelectedBot) {
-            val identifier = packet.bitIdentifier
+            val identifier = packet.botIdentifier
             if (identifier != null) {
                 currentBot = botManager.findBot(identifier)
             }

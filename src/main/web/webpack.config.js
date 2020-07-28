@@ -7,7 +7,9 @@ module.exports = {
     entry: {
         'default': './css/default.sass',
         'united': './css/united.sass',
-        'lumen': './css/lumen.sass'
+        'lumen': './css/lumen.sass',
+        'cerulean': './css/cerulean.sass',
+        'cosmo': './css/cosmo.sass'
     },
     output: {
         path: path.resolve(__dirname, '../../../build/webpack'),
@@ -108,9 +110,9 @@ module.exports = {
         }),
         new RemovePlugin({
             after: {
-                root:'../../../build/webpack',
+                root: '../../../build/webpack',
                 include: [
-                  './drop'
+                    './drop'
                 ],
             }
         }),

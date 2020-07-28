@@ -1,11 +1,12 @@
 package eu.musicnova.frontend.login
 
+import eu.musicnova.frontend.startMainPage
+import eu.musicnova.frontend.thrd.Swal
 import eu.musicnova.frontend.utils.Const
 import eu.musicnova.frontend.utils.newBody
 import eu.musicnova.frontend.utils.postRequest
-import eu.musicnova.shared.PacketLoginRequest
-import eu.musicnova.shared.PacketLoginResponse
-import eu.musicnova.shared.SharedConst
+import eu.musicnova.frontend.utils.setTheme
+import eu.musicnova.shared.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -20,10 +21,31 @@ import kotlin.browser.document
 
 fun buildLoginWindow() {
     newBody().append {
+        nav(classes = "navbar") {
+            div(classes = "navbar-item") {
+                +"Test"
+            }
+            div(classes = "navbar-end") {
+                div(classes = "navbar-item has-dropdown is-hoverable") {
+                    a(classes = "navbar-link") { +"Themes" }
+                    div(classes = "navbar-dropdown is-boxed") {
+                        WebTheme.values().forEach { theme ->
+                            a(classes = "navbar-item") {
+                                +theme.name
+                                onClickFunction = {
+                                    setTheme(theme)
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
         div {
             form(method = FormMethod.post) {
 
-                val emailField = input(classes = "input", type = InputType.email) { required = true }
+                val emailField = input(classes = "input", type = InputType.text) { required = true }
                 val passwordField = input(classes = "input", type = InputType.password) { required = true }
                 val loginBTN = button(classes = "button is-primary is-light") {
                     i(classes = "fas fa-sign-in-alt") { }
@@ -52,8 +74,12 @@ fun buildLoginWindow() {
                                 PacketLoginRequest.serializer(),
                                 PacketLoginResponse.serializer()
                         )
-                        delay(5000)
                         setLoginDisabled(false)
+                        when (response.status) {
+                            LoginStatusResponse.VALID -> startMainPage()
+                            LoginStatusResponse.INVALID -> Swal.fire("Login Invalid")
+                            LoginStatusResponse.BLOCKED -> Swal.fire("you are blocked")
+                        }
                         println(response)
                     }
                 }

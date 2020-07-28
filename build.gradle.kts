@@ -152,9 +152,6 @@ tasks {
             jvmTarget = "11"
         }
     }
-    create("first-install") {
-        dependsOn("npmInstall")
-    }
     create("copy-web-files") {
         dependsOn("pre-copy-web-files", "copy-kotlin-js", "copy-assets")
     }
@@ -162,6 +159,7 @@ tasks {
         dependsOn(JavaPlugin.PROCESS_RESOURCES_TASK_NAME)
     }
     create<NpmTask>("build-webpack") {
+        dependsOn("npmInstall","pre-copy-web-files")
         setArgs(listOf("run", "webpack"))
     }
     create<Copy>("copy-assets") {
@@ -178,6 +176,9 @@ tasks {
     }
     classes {
         dependsOn("copy-web-files")
+    }
+    clean{
+        delete("src/main/web/node_modules")
     }
     springBoot {
         buildInfo()

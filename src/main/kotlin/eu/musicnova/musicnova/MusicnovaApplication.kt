@@ -17,7 +17,7 @@ import java.io.File
 @EnableScheduling
 class MusicnovaApplication {
 
-    companion object Static {
+    companion object Launcher {
         @JvmStatic
         fun main(args: Array<String>) {
             AnsiConsole.systemInstall()

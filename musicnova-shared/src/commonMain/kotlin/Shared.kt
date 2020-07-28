@@ -12,14 +12,17 @@ object SharedConst {
     const val INTERNAL_LOGIN_PATH = "$INTERNAL_API_PATH/login"
     const val INTERNAL_LOGOUT_PATH = "$INTERNAL_API_PATH/logout"
     const val INTERNAL_OTP_PATH = "$INTERNAL_API_PATH/otp"
+    const val INTERNAL_SET_THEME_PATH = "$INTERNAL_LOGIN_PATH/setTheme"
     const val SOCKET_PATH = "$INTERNAL_API_PATH/event"
     const val START_DATA_FIELD = "pageStartData"
+    const val STYLE_LINK_ID = "style-link"
 }
 
 @Serializable
 data class PageStartData(
         val loginStatus: LoginStatus,
-        val dashboardPage: DashboardPage
+        val dashboardPage: DashboardPage,
+        val theme: WebTheme
 )
 
 @Serializable
@@ -101,7 +104,7 @@ data class WsPacketBotPlayerUpdateVolume(
 
 @Serializable
 data class WsPacketUpdateSelectedBot(
-        val bitIdentifier: BotIdentifier?
+        val botIdentifier: BotIdentifier?
 ) : WsPacket()
 
 
@@ -115,8 +118,13 @@ data class PacketLoginRequest(
 )
 
 @Serializable
+data class ChangeThemeRequest(
+        val newTheme: WebTheme
+)
+
+@Serializable
 data class PacketLoginResponse(
-        val status: LoginStatus
+        val status: LoginStatusResponse
 )
 
 
@@ -142,6 +150,10 @@ enum class DashboardPage(val path: String) {
 
 enum class LoginStatus {
     LOGIN, LOGOUT, BLOCKED, OTP, ERROR
+}
+
+enum class LoginStatusResponse {
+    VALID, INVALID, BLOCKED
 }
 
 @Serializable

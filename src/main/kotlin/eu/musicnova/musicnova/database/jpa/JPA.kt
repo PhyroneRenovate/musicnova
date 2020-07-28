@@ -2,12 +2,14 @@ package eu.musicnova.musicnova.database.jpa
 
 import com.github.manevolent.ts3j.identity.LocalIdentity
 import com.github.manevolent.ts3j.util.Ts3Crypt
+import com.google.common.hash.Hashing
 import eu.musicnova.musicnova.bot.teamspeak.TeamspeakBotManager
 import eu.musicnova.musicnova.bot.teamspeak.TeamspeakClientProtocolVersion
 import eu.musicnova.musicnova.utils.MnRepository
 import org.hibernate.annotations.Cache
 import org.hibernate.annotations.CacheConcurrencyStrategy
 import org.springframework.data.jpa.repository.Modifying
+import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.util.*
 import javax.persistence.*
@@ -49,7 +51,7 @@ data class PersistentTeamspeakBotData(
 @Table(name = "teamspeak_identity")
 data class PersistentTeamspeakIdentity(
         @Lob var asn: ByteArray,
-        @Column("asn_offset")
+        @Column(name = "asn_offset")
         var offset: Long,
         var nickname: String? = null,
         @Id var uuid: UUID = UUID.randomUUID()
@@ -109,11 +111,15 @@ data class PeristentAudioTrackData(
 @Entity
 @Table(name = "web_user")
 data class PersistentWebUserData(
+        @Column(length = 255, unique = true)
         var username: String,
+        @Column(length = 64)
         var password: ByteArray,
-        val salt: ByteArray,
-        @Id var userID: UUID
+        @Column(length = 16, unique = true)
+        var salt: ByteArray,
+        @Id var userID: UUID = UUID.randomUUID()
 ) {
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -128,6 +134,15 @@ data class PersistentWebUserData(
         return true
     }
 
+    fun checkPassword(password: String) = hashPassword(password, salt).contentEquals(this.password)
+
+    fun setPassword(newPassword: String) {
+        val newSalt = newSalt()
+        val newPasswordBytes = hashPassword(newPassword, newSalt)
+        this.salt = newSalt
+        this.password = newPasswordBytes
+    }
+
     override fun hashCode(): Int {
         var result = username.hashCode()
         result = 31 * result + password.contentHashCode()
@@ -139,6 +154,26 @@ data class PersistentWebUserData(
     @OneToMany(mappedBy = "webUser")
     var sessions: Set<PersistentWebUserSessionData> = setOf()
 
+    companion object Static {
+        private val hashing = Hashing.sha512()
+        private val random = SecureRandom.getInstanceStrong()
+        operator fun invoke(username: String, password: String): PersistentWebUserData {
+            val newSalt = newSalt()
+            val hashedPassword = hashPassword(password, newSalt)
+            return PersistentWebUserData(username, hashedPassword, newSalt)
+        }
+
+        private fun hashPassword(password: String, salt: ByteArray): ByteArray = hashing.newHasher()
+                .putString(password, Charsets.UTF_8).putBytes(salt)
+                .hash().asBytes()
+
+        private fun newSalt(): ByteArray {
+            val newSalt = ByteArray(16)
+            random.nextBytes(newSalt)
+            return newSalt
+        }
+
+    }
 }
 
 @Entity
@@ -168,7 +203,9 @@ interface WebUserSessionDatabase : MnRepository<PersistentWebUserSessionData, St
     fun deleteBySessionToken(token: String)
 }
 
-interface WebUserDatabase : MnRepository<PersistentWebUserData, UUID>
+interface WebUserDatabase : MnRepository<PersistentWebUserData, UUID> {
+    fun findByUsername(username: String): PersistentWebUserData?
+}
 
 interface AudioContollerDatabase : MnRepository<PersistentAudioControllerData, UUID>
 

@@ -23,11 +23,14 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.14.0",
+    "@sweetalert2/theme-bulma": "^3.2.0",
     "bulma": "^0.9.0",
     "bulma-checkradio": "^1.1.1",
     "bulma-slider": "^2.0.4",
     "bulma-switch": "^2.0.0",
     "bulmaswatch": "^0.8.1",
-    "ionicons": "^5.1.2"
+    "ionicons": "^5.1.2",
+    "spinkit": "^2.0.1",
+    "sweetalert2": "^9.17.1"
   }
 }
