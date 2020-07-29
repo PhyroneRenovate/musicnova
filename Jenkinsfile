@@ -8,20 +8,8 @@ pipeline {
     }
 
     stage('BootJar') {
-      parallel {
-        stage('BootJar') {
-          steps {
-            sh 'gradle bootJar'
-          }
-        }
-
-        stage('Create Docs') {
-          agent any
-          steps {
-            sh 'gradle dokka'
-          }
-        }
-
+      steps {
+        sh 'gradle bootJar'
       }
     }
 
