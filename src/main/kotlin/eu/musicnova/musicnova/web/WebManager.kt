@@ -18,17 +18,17 @@ class WebManager {
     private val logger = LoggerFactory.getLogger(WebManager::class.java)
 
     @Bean
-    fun appEnv(appContext: ApplicationContext, config: Konf) = applicationEngineEnvironment {
+    fun appEnv(appContext: ApplicationContext, config: Konf, webModules: List<WebModule>, coreWebConfigSpec: CoreWebConfig) = applicationEngineEnvironment {
         logger.info("Configure WebServer...")
 
-        config[WebConfig.hosts].forEach { hostAndPort ->
+        config[coreWebConfigSpec.hosts].forEach { hostAndPort ->
             connector {
                 this.host = hostAndPort.host
                 this.port = hostAndPort.port
             }
         }
 
-        appContext.getBeansOfType(WebModule::class.java).values.forEach { webExt ->
+        webModules.forEach { webExt ->
             module {
                 with(webExt) { invoke() }
             }
@@ -51,14 +51,6 @@ class WebManager {
         engine.start()
     }
 
-    @Bean
-    fun webConfigSpec(): ConfigSpec = WebConfig
-
-    private object WebConfig : ConfigSpec("web") {
-        val hosts by optional(listOf(WebHostAndPort("0.0.0.0", 8080)))
-    }
-
-    private data class WebHostAndPort(val host: String, val port: Int)
 
     @PreDestroy
     fun onStop() {
@@ -69,4 +61,9 @@ class WebManager {
 
 }
 
+@Component
+class CoreWebConfig : ConfigSpec("web") {
+    val hosts by optional(listOf(WebHostAndPort("0.0.0.0", 8080)))
+}
 
+data class WebHostAndPort(val host: String, val port: Int)

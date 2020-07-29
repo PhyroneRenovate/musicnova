@@ -106,7 +106,8 @@ dependencies {
             "ktor-server-netty",
             "ktor-html-builder",
             "ktor-websockets",
-            "ktor-jackson"
+            "ktor-jackson",
+            "ktor-auth"
     ).forEach { name ->
         implementation("io.ktor", name, "1.3.2")
     }

@@ -9,14 +9,14 @@ import io.ktor.http.content.static
 import io.ktor.routing.route
 import io.ktor.routing.routing
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
-import javax.inject.Named
 
 @Component
 class WebStaticContentModule : WebModule {
 
     @Autowired
-    @Named(BEAN_IS_BOOT_JAR)
+    @Qualifier(BEAN_IS_BOOT_JAR)
     var isBootJar: Boolean = false
 
     override fun Application.invoke() {

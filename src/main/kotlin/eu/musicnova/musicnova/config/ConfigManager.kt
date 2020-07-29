@@ -1,4 +1,3 @@
-
 package eu.musicnova.musicnova.config
 
 import com.uchuhimo.konf.ConfigSpec
@@ -16,8 +15,8 @@ class ConfigManager {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     @Bean
-    fun config(appContext: ApplicationContext, @Named("main-config") configFile: File?) = ConfigWrapper {
-        appContext.getBeansOfType(ConfigSpec::class.java).toSortedMap(Comparator { o1, o2 -> o1.compareTo(o2) }).values.forEach { spec ->
+    fun config(appContext: ApplicationContext, @Named("main-config") configFile: File?,configSpecList: List<ConfigSpec>) = ConfigWrapper {
+        configSpecList.forEach { spec ->
             addSpec(spec)
         }
     }.also { configWrapper ->
