@@ -1,25 +1,40 @@
 pipeline {
-    agent any
-    stages {
-        stage("Clean") {
-            steps {
-                sh "gradle clean"
-            }
-        }
-        stage("BootJar") {
-            steps {
-                sh "gradle bootJar"
-            }
-        }
-        stage("Archive") {
-            steps {
-                archiveArtifacts(artifacts: 'build/libs/*.jar', excludes: 'build/libs/original-*.jar')
-            }
+  agent any
+  stages {
+    stage('Clean') {
+      steps {
+        sh 'gradle clean'
+      }
+    }
+
+    stage('BootJar') {
+      parallel {
+        stage('BootJar') {
+          steps {
+            sh 'gradle bootJar'
+          }
         }
 
+        stage('Create Docs') {
+          agent any
+          steps {
+            sh 'gradle dokka'
+          }
+        }
+
+      }
     }
-    tools {
-        jdk 'openjdk11'
-        gradle 'gradle5'
+
+    stage('Archive') {
+      steps {
+        archiveArtifacts(artifacts: 'build/libs/*.jar', excludes: 'build/libs/original-*.jar')
+        archiveArtifacts 'build/javadoc/'
+      }
     }
+
+  }
+  tools {
+    jdk 'openjdk11'
+    gradle 'gradle5'
+  }
 }
