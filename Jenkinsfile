@@ -13,7 +13,7 @@ pipeline {
       }
     }
 
-    stage('') {
+    stage('Post Build') {
       parallel {
         stage('Archive') {
           steps {
