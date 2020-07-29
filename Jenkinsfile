@@ -30,11 +30,11 @@ pipeline {
       }
     }
 
-    stage('Archive Docs') {
+    /*stage('Archive Docs') {
       steps {
         archiveArtifacts 'build/javadoc/'
       }
-    }
+    }*/
 
   }
   tools {
