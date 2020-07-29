@@ -13,9 +13,25 @@ pipeline {
       }
     }
 
-    stage('Archive') {
+    stage('') {
+      parallel {
+        stage('Archive') {
+          steps {
+            archiveArtifacts(artifacts: 'build/libs/*.jar', excludes: 'build/libs/original-*.jar')
+          }
+        }
+
+        stage('Generate Docs') {
+          steps {
+            sh 'gradle dokka'
+          }
+        }
+
+      }
+    }
+
+    stage('Archive Docs') {
       steps {
-        archiveArtifacts(artifacts: 'build/libs/*.jar', excludes: 'build/libs/original-*.jar')
         archiveArtifacts 'build/javadoc/'
       }
     }
