@@ -184,6 +184,7 @@ class TeamspeakBotManager {
                 dao.connected = false
                 teamspeakBotDatabase.save(dao)
             }
+            listenerAdapter.onStatusChange()
             ioTask { tsSocket?.disconnect() }
             tsSocket = null
         }
@@ -239,7 +240,7 @@ class TeamspeakBotManager {
             override fun suggest(): List<String> = listOf()
         }
 
-        override val audioController by lazy { audioProvider[uuid] }
+        override val audioController by lazy { audioProvider[uuid, listenerAdapter] }
         private val audioPlayer by lazy {
             audioController.lavaPlayer.also { player ->
                 // Prevent Opus AudioFrame Passthrough due to TeamSpeak Packet Size limit (f.e. youtube)

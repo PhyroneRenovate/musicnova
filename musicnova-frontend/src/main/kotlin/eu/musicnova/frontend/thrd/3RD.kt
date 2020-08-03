@@ -12,7 +12,9 @@ external object Swal {
     fun getContent(): HTMLElement
     fun isVisible()
     fun getTitle(): String
-    fun isLoading()
+    fun isLoading():Boolean
+    fun showLoading()
+    fun hideLoading()
     fun close()
 }
 

@@ -11,9 +11,11 @@ import de.vandermeer.skb.interfaces.document.TableRowStyle
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.python.tests.Parent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.lang.IllegalArgumentException
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
@@ -25,6 +27,26 @@ class BotManager {
     private val bots = HashSet<Bot>()
 
     private val logger = LoggerFactory.getLogger(this::class.java)
+
+    /**
+     *
+     * @param includeChildren Boolean resolve children of parentbots (f.e. discord)
+     * @return List<Bot> a copy of all bots as a list
+     */
+    @JvmOverloads
+    fun all(includeChildren: Boolean = true): List<Bot> {
+        val response = mutableListOf<Bot>()
+
+        bots.sortedBy { bot -> bot.name }.forEach { bot ->
+            response += bot
+            if ((bot is ParentBot) && includeChildren) {
+                bot.children.forEach { childBot ->
+                    response.add(childBot)
+                }
+            }
+        }
+        return response
+    }
 
     fun registerBot(bot: Bot) {
         bots.add(bot)
@@ -45,8 +67,17 @@ class BotManager {
     fun findBot(name: String): Bot? = bots.find { bot -> name.equals(bot.uuid.toString(), true) }
             ?: bots.find { bot -> name.equals(bot.name, true) }
 
-    fun findBot(uuid: UUID,subID:Long?) : Bot? {
-        TODO()
+    fun findBot(uuid: UUID, subID: Long?): Bot? {
+        val bot = bots.find { bot -> bot.uuid == uuid }
+        return if (subID != null) {
+            if (bot is ParentBot) {
+                bot.getChild(subID)
+            } else {
+                throw IllegalArgumentException("cant select a childbot from non parent bot")
+            }
+        } else {
+            bot
+        }
     }
 
     private val botNameArg = "UUIDorUsername"

@@ -8,7 +8,11 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import eu.musicnova.musicnova.MusicnovaApplication
+import eu.musicnova.musicnova.bot.Bot
 import eu.musicnova.musicnova.bot.BotEventListener
+import eu.musicnova.musicnova.bot.ChildBot
+import eu.musicnova.shared.BotIdentifier
+import eu.musicnova.shared.BotIdentifierJVMExt
 import kotlinx.coroutines.*
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.support.JpaEntityInformation
@@ -116,7 +120,7 @@ class MnRepositoryImpl<T, ID : Serializable>(
 ) : SimpleJpaRepository<T, ID>(entityInformation, entityManager), MnRepository<T, ID> {
     @Transactional
     override fun refresh(entity: T) {
-        this.entityManager.refresh(this.entityManager.merge(entity));
+        this.entityManager.refresh(this.entityManager.merge(entity))
         // entityManager.refresh(entity)
     }
 
@@ -144,3 +148,7 @@ class StringLineOutputStream(private val block: (String) -> Unit) : ByteArrayOut
     }
 
 }
+
+inline fun <reified T> Any?.cast(): T? = this as? T
+
+ fun Bot.serializableIdentifier() = BotIdentifierJVMExt(this.uuid, this.cast<ChildBot>()?.childID)

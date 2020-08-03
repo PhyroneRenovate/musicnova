@@ -66,7 +66,7 @@ class WebSessionAuthManager {
 
     fun ApplicationCall.createSession(user: PersistentWebUserData): PersistentWebUserSessionData {
         val session = createSessionObject(user)
-        response.cookies.append(sessionName, session.sessionToken, cookieEncoding, path = "/")
+        response.cookies.append(sessionName, session.sessionToken, cookieEncoding, path = "/", httpOnly = true)
         return session
     }
 

@@ -35,6 +35,7 @@ interface ParentBot : Bot {
 }
 
 interface ChildBot : Bot {
+    val childID: Long?
     val parentBot: ParentBot
 }
 
@@ -43,9 +44,7 @@ interface MusicBot : Bot {
     val audioController: AudioController
 }
 
-interface DiscordBot : Bot {
-
-}
+interface DiscordBot : Bot
 
 
 interface DiscordMultiGuildBot : DiscordBot, ParentBot {

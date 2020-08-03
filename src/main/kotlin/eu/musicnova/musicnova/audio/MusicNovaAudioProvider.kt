@@ -2,10 +2,13 @@ package eu.musicnova.musicnova.audio
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.player.event.*
 import com.sedmelluq.discord.lavaplayer.source.local.LocalAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioReference
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import eu.musicnova.musicnova.bot.BotEventListener
+import eu.musicnova.musicnova.bot.BotPlayerEventListner
 import eu.musicnova.musicnova.database.jpa.AudioContollerDatabase
 import eu.musicnova.musicnova.database.jpa.PersistentAudioControllerData
 import eu.musicnova.musicnova.utils.asnycIOTask
@@ -31,15 +34,23 @@ class MusicNovaAudioProvider {
 
     private val localAudioSource = LocalAudioSourceManager()
 
-    operator fun get(id: UUID) = getOrCreate(audioControllerDatabase.findById(id).orElseGet { PersistentAudioControllerData(id, 100) })
+    operator fun get(id: UUID, listener: BotPlayerEventListner) = getOrCreate(
+            audioControllerDatabase.findById(id)
+                    .orElseGet { PersistentAudioControllerData(id, 100) },
+            listener)
 
-    private fun getOrCreate(dao: PersistentAudioControllerData): LavaPlayerAudioController = ProvidedAudioControllerImpl(dao)
+    private fun getOrCreate(dao: PersistentAudioControllerData, listener: BotPlayerEventListner): LavaPlayerAudioController = ProvidedAudioControllerImpl(dao, listener)
 
-    private inner class ProvidedAudioControllerImpl(private val data: PersistentAudioControllerData, override val lavaPlayer: AudioPlayer = playerManager.createPlayer()) : LavaPlayerAudioController, AudioPlayer by lavaPlayer {
+    private inner class ProvidedAudioControllerImpl(
+            private val data: PersistentAudioControllerData,
+            private val listener: BotPlayerEventListner,
+            override val lavaPlayer: AudioPlayer = playerManager.createPlayer()
+    ) : LavaPlayerAudioController, AudioPlayer by lavaPlayer, AudioEventListener {
 
 
         init {
             lavaPlayer.volume = data.volume
+            lavaPlayer.addListener(this)
         }
 
         override fun setVolume(volume: Int) {
@@ -48,10 +59,19 @@ class MusicNovaAudioProvider {
                 audioControllerDatabase.save(data)
             }
             lavaPlayer.volume = volume
+            listener.onVolumeUpdate()
         }
 
+
         override val isPlaying: Boolean
-            get() = lavaPlayer.playingTrack != null || !lavaPlayer.isPaused
+            get() = lavaPlayer.playingTrack != null && !lavaPlayer.isPaused
+
+        override fun togglePlayPause() {
+            lavaPlayer.isPaused = !lavaPlayer.isPaused
+        }
+
+        override val currentTrack: AudioTrack?
+            get() = lavaPlayer.playingTrack
 
         override suspend fun playStream(url: String): Boolean {
             return try {
@@ -79,5 +99,13 @@ class MusicNovaAudioProvider {
                 false
             }
         }
+
+        override fun onEvent(event: AudioEvent) {
+            listener.onPlayerContinationUpdate()
+            if (event is TrackStartEvent || event is TrackEndEvent) {
+                listener.onPlayerTrackUpdate()
+            }
+        }
+
     }
 }

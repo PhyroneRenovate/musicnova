@@ -20,6 +20,7 @@ import kotlin.browser.window
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.js.Console
 
 val baseURL by lazy {
     val loc = window.location
@@ -83,4 +84,8 @@ fun setTheme(theme: WebTheme) {
     println("switch to theme ${theme.name} with url ${theme.fullPath}")
     GlobalScope.launch { postRequest(SharedConst.INTERNAL_SET_THEME_PATH, ChangeThemeRequest(theme), ChangeThemeRequest.serializer(), EmptyObject.serializer()) }
     styleLink.href = theme.fullPath
+}
+
+fun Console.debug(vararg any: Any?) {
+    asDynamic().debug(any)
 }

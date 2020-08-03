@@ -1,9 +1,11 @@
 package eu.musicnova.musicnova.web.modules
 
-import eu.musicnova.musicnova.bot.Bot
 import eu.musicnova.musicnova.bot.BotManager
+import eu.musicnova.musicnova.bot.ChildBot
+import eu.musicnova.musicnova.bot.MusicBot
 import eu.musicnova.musicnova.database.jpa.PersistentWebUserSessionData
 import eu.musicnova.musicnova.module.WebModule
+import eu.musicnova.musicnova.web.sesssions.SocketSessionManager
 import eu.musicnova.musicnova.web.auth.WebSessionAuthManager
 import eu.musicnova.musicnova.web.auth.WebUserLoginManager
 import eu.musicnova.shared.*
@@ -34,6 +36,12 @@ class WiCommunicationWebModule : WebModule {
     @Autowired
     lateinit var webUserAuthManager: WebUserLoginManager
 
+    @Autowired
+    lateinit var abotManager: BotManager
+
+    @Autowired
+    lateinit var sessionManager: SocketSessionManager
+
     private val logger = LoggerFactory.getLogger(this::class.java)
     override fun Application.invoke() {
         routing {
@@ -51,21 +59,43 @@ class WiCommunicationWebModule : WebModule {
 
                 call.respondBytes(protoBuf.dump(PacketLoginResponse.serializer(), response), ContentType.Application.ProtoBuf)
             }
+
             post(SharedConst.INTERNAL_SET_THEME_PATH) {
                 val request = protoBuf.load(ChangeThemeRequest.serializer(), call.receive())
                 call.sessions.set(request.newTheme)
                 call.respondBytes(protoBuf.dump(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
             }
 
+            post(SharedConst.INTERNAL_GET_BOTS_REQUEST) {
+
+                val response = PacketBotsResponse(abotManager.all(true).map { bot ->
+                    val subID = (bot as? ChildBot)?.childID
+
+                    BotData(BotIdentifierJVMExt.invoke(bot.uuid, subID), bot.name
+                            ?: ("${bot.uuid}" + if (subID != null) " - $subID" else ""),
+                            bot is ChildBot,
+                            bot is MusicBot
+                    )
+                })
+
+                call.respondBytes(protoBuf.dump(PacketBotsResponse.serializer(), response), ContentType.Application.ProtoBuf)
+            }
+
+            post(SharedConst.INTERNAL_SET_SELECT_COOkIE) {
+                call.sessions.set(protoBuf.load(BotIdentifier.serializer(), call.receive()))
+                call.respondBytes(protoBuf.dump(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
+            }
+
             post(SharedConst.SOCKET_PATH) {
                 TODO("implement")
             }
+
             webSocket(SharedConst.SOCKET_PATH) {
                 with(webSessionAuthManager) {
 
                     val session = call.getUserSession()
                     if (session != null) {
-                        WebSocketCommunicationAdapter(this@webSocket, session).start()
+                        WebSocketCommunicationAdapter(this@webSocket, session, call.sessions.get()).start()
                     } else {
                         close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "login first"))
                     }
@@ -83,9 +113,10 @@ class WiCommunicationWebModule : WebModule {
 
     inner class WebSocketCommunicationAdapter(
             private val webSocket: DefaultWebSocketSession,
-            private val loginSession: PersistentWebUserSessionData
+            loginSession: PersistentWebUserSessionData,
+            selectedBot: BotIdentifier?
     ) : CommunicationAdapter {
-        private val session: CommunicationSession = CommunicationSession(this, loginSession)
+        private val session: SocketSessionManager.CommunicationSession = sessionManager.CommunicationSession(this, loginSession, selectedBot)
         override suspend fun start() {
             coroutineScope {
                 launch { webSocket.listener() }
@@ -124,34 +155,6 @@ class WiCommunicationWebModule : WebModule {
     @Autowired
     lateinit var botManager: BotManager
 
-    inner class CommunicationSession(
-            private val adapter: CommunicationAdapter,
-            private val session: PersistentWebUserSessionData
-    ) {
-
-        private var currentBot: Bot? = null
-
-        private fun BotManager.findBot(identifier: BotIdentifier) = findBot(identifier.uuid, identifier.subID)
-        private fun handleSwitchBot(packet: WsPacketUpdateSelectedBot) {
-            val identifier = packet.botIdentifier
-            if (identifier != null) {
-                currentBot = botManager.findBot(identifier)
-            }
-        }
-
-        private suspend fun handlePacketClose(packet: WsPacketClose) {
-            adapter.stop()
-        }
-
-        suspend fun onPacket(packet: WsPacket) {
-            when (packet) {
-                is WsPacketClose -> handlePacketClose(packet)
-                is WsPacketBotPlayerPlayStream -> TODO()
-                is WsPacketBotPlayerUpdateVolume -> TODO()
-                is WsPacketUpdateSelectedBot -> TODO()
-            }
-        }
-    }
 
 }
 

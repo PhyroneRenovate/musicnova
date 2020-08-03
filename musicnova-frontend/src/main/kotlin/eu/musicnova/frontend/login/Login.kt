@@ -8,16 +8,13 @@ import eu.musicnova.frontend.utils.postRequest
 import eu.musicnova.frontend.utils.setTheme
 import eu.musicnova.shared.*
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.html.FormMethod
 import kotlinx.html.InputType
 import kotlinx.html.dom.append
+import kotlinx.html.js.div
 import kotlinx.html.js.*
-import kotlinx.html.p
-import org.w3c.dom.HTMLElement
-import org.w3c.dom.HTMLFormElement
-import kotlin.browser.document
+
 
 fun buildLoginWindow() {
     newBody().append {

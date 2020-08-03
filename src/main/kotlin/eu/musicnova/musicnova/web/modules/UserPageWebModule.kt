@@ -1,5 +1,6 @@
 package eu.musicnova.musicnova.web.modules
 
+import eu.musicnova.musicnova.boot.MusicnovaApplicationCommandLine
 import eu.musicnova.musicnova.module.WebModule
 import eu.musicnova.musicnova.web.auth.WebSessionAuthManager
 import eu.musicnova.musicnova.web.template.PageTemplate
@@ -25,6 +26,8 @@ class UserPageWebModule : WebModule {
     @Autowired
     lateinit var sessionAuthManager: WebSessionAuthManager
 
+    private val sendPageDebug = MusicnovaApplicationCommandLine.debug
+
     suspend fun PipelineContext<Unit, ApplicationCall>.handlePage(dashboardPage: DashboardPage) {
         val session = with(sessionAuthManager) { getUserSession() }
         val loginStatus = if (session == null) {
@@ -33,7 +36,7 @@ class UserPageWebModule : WebModule {
             LoginStatus.LOGIN
         }
         val theme = call.sessions.getOrSet { WebTheme.UNITED }
-        call.respondHtml { insert(PageTemplate(PageStartData(loginStatus, dashboardPage, theme), theme)) {} }
+        call.respondHtml { insert(PageTemplate(PageStartData(loginStatus, dashboardPage, theme, sendPageDebug), theme)) {} }
     }
 
     override fun Application.invoke() {
