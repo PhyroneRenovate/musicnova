@@ -7,15 +7,21 @@ import eu.musicnova.shared.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.html.InputType
+import kotlinx.html.MATH
 import kotlinx.html.dom.append
+import kotlinx.html.id
 import kotlinx.html.js.*
 import kotlinx.html.role
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.w3c.dom.*
+import org.w3c.dom.events.Event
+import kotlin.browser.window
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.js.Math
+import kotlin.random.Random
 
 class DashboardSession {
     var socket: WebSocket? = null
@@ -38,10 +44,9 @@ class DashboardSession {
         socket.onopen = {
             sendQueuedPackets()
             lock.resume(socket)
-            //socket.send(WsPacketSwitchBot(BotIdentifier(32124324323, -3211234113, 23)))
         }
         socket.onclose = {
-            console.log("socked closed", it)
+            handleSocketClose(it)
         }
         socket.onmessage = {
             val packetBuffer = it.data as? ArrayBuffer
@@ -70,8 +75,28 @@ class DashboardSession {
     }
 
     private fun handleUpdateSongDuration(packetPosition: WsPacketUpdateSongDurationPosition) {
-        if (!volumeDurationSliderUpdateLock)
-            playerDurationSlider.value = packetPosition.postition.toString()
+        setPositionSliderValue(packetPosition.postition)
+    }
+
+    fun setPositionSliderValue(position: Long) {
+        if (!volumeDurationSliderUpdateLock) {
+            setPositionLabelValue(position)
+            playerDurationSlider.value = position.toString()
+
+        }
+    }
+
+    fun setPositionLabelValue(position: Long) {
+        playerCurrentTimeLabelSpan.innerText = millisToHumantTime(position)
+    }
+
+    fun millisToHumantTime(millis: Long): String {
+        val totalSec = millis / 1000
+        val totalMins = totalSec / 60
+        val hours = totalMins / 60
+        val mins = totalMins - (hours * 60)
+        val secs = totalSec - (totalMins * 60)
+        return (if (hours > 1) "$hours:" else "") + (if (mins < 10) "0" else "") + "$mins:$secs"
     }
 
     private fun handleBotUpdatePacket(packet: WsPacketUpdateBotInfo) {
@@ -87,15 +112,19 @@ class DashboardSession {
     private fun handlePlayerIsPlaying(packet: WsPacketBotPlayerUpdateIsPlaying) {
         val playing = packet.isPlaying
         if (playing != null) {
-            if(playing){
+            if (playing) {
                 playPauseIcon.classList.replace(IS_PLAYING_FAS, IS_PAUSED_FAS)
-            }else{
+            } else {
                 playPauseIcon.classList.replace(IS_PAUSED_FAS, IS_PLAYING_FAS)
             }
 
         }
     }
 
+    fun handleSocketClose(event: Event) {
+        console.log("socked closed", event)
+        window.location.reload()
+    }
 
 
     fun handleIncommingVolumeUpdate(packet: WsPacketBotPlayerUpdateVolume) {
@@ -105,17 +134,15 @@ class DashboardSession {
     fun handleSongInfoUpdate(packet: WsPacketUpdateSongInfo) {
         val title = packet.title
         playerDurationSlider.value = "0"
-        if (title != null) {
-            val maxLenght = packet.length
-            if (maxLenght != null) {
-                playerDurationSlider.max = maxLenght.toString()
-                playerDurationSlider.disabled = false
-            } else {
-                playerDurationSlider.max = "0"
-                playerDurationSlider.disabled = true
-            }
+        val maxLenght = packet.length
+        if (title != null && maxLenght != null) {
+            playerDurationSlider.max = maxLenght.toString()
+            playerMaxTimeLabelSpan.innerText = millisToHumantTime(maxLenght)
+            playerDurationSlider.disabled = false
         } else {
             playerDurationSlider.max = "0"
+            playerCurrentTimeLabelSpan.innerText = millisToHumantTime(0)
+            playerMaxTimeLabelSpan.innerText = millisToHumantTime(0)
             playerDurationSlider.disabled = true
         }
     }
@@ -183,7 +210,8 @@ class DashboardSession {
     private lateinit var playerPlayPauseButton: HTMLButtonElement
     private lateinit var playerStopButton: HTMLButtonElement
     private lateinit var playerDurationSlider: HTMLInputElement
-    private lateinit var playerDurationtimeSpan: HTMLSpanElement
+    private lateinit var playerMaxTimeLabelSpan: HTMLSpanElement
+    private lateinit var playerCurrentTimeLabelSpan: HTMLSpanElement
     private lateinit var playPauseIcon: HTMLElement
     private var volumeDurationSliderUpdateLock = false
     private var volumeSliderUpdateLock = false
@@ -192,13 +220,30 @@ class DashboardSession {
     private fun buildPage() {
         newBody().append {
             div("sticky-top") {
-                nav(classes = "navbar is-primary") {
+                nav("navbar is-primary") {
                     role = "navigation"
-                    div(classes = "navbar-item") {
+                    div("navbar-item") {
                         a {
                             +"Select Bot"
                             onClickFunction = {
                                 openBotSelect()
+                            }
+                        }
+                    }
+                    div("navbar-end") {
+                        div("navbar-item") {
+                            div("field") {
+                                val checkBotId = Random.nextDouble(Double.MIN_VALUE, Double.MAX_VALUE).toString()
+                                input(classes = "switch is-info", type = InputType.checkBox) {
+                                    id = checkBotId
+                                    onChangeFunction = {
+                                        console.log("toggle connected")
+                                    }
+                                }
+                                label {
+                                    htmlFor = checkBotId
+                                    +"Enabled"
+                                }
                             }
                         }
                     }
@@ -223,7 +268,12 @@ class DashboardSession {
                                 sendPacket(WsPacketBotPlayerUpdateIsPlaying())
                             }
                         }
-                        playerStopButton = button(classes = "button") { disabled = true; i("fas fa-stop") { } }
+                        playerStopButton = button(classes = "button") {
+                            disabled = true; i("fas fa-stop") { }
+                            onClickFunction = {
+                                sendPacket(WsPacketBotPlayerStopTrack)
+                            }
+                        }
                         button(classes = "button") { disabled = true;i("fas fa-forward") { } }
                     }
 
@@ -259,9 +309,14 @@ class DashboardSession {
                             }
                             onInputFunction = {
                                 volumeDurationSliderUpdateLock = true
+                                setPositionLabelValue(playerDurationSlider.value.toLong())
                             }
                         }
-                        playerDurationtimeSpan = span { +"0:00/0:00" }
+                        span {
+                            playerMaxTimeLabelSpan = span { +"0:00" }
+                            +"/"
+                            playerCurrentTimeLabelSpan = span { +"0:00" }
+                        }
                     }
                 }
             }
@@ -275,7 +330,7 @@ class DashboardSession {
         socket = openSocket()
     }
 
-    companion object Static{
+    companion object Static {
         private const val IS_PLAYING_FAS = "fa-play"
         private const val IS_PAUSED_FAS = "fa-pause"
     }

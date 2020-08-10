@@ -125,9 +125,14 @@ class SocketSessionManager {
                 is WsPacketUpdateSelectedBot -> handlePacketUpdateSelectedBot(packet)
                 is WsPacketBotPlayerUpdateIsPlaying -> handlePacketBotPlayerUpdateIsPlaying(packet)
                 is WsPacketUpdateSongDurationPosition -> handlePacketBotPlayerUpdateSongDuration(packet)
-                else -> {
-                    logger.warn("Unhandled Packet: $packet")
-                }
+                is WsPacketBotPlayerStopTrack -> handlePacketBotPlayerStopTrack()
+                else -> logger.warn("Unhandled Packet: $packet")
+            }
+        }
+
+        private fun handlePacketBotPlayerStopTrack() {
+            onMusicBot { bot ->
+                bot.audioController.stopTrack()
             }
         }
 

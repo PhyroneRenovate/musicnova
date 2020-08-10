@@ -92,7 +92,6 @@ class WiCommunicationWebModule : WebModule {
 
             webSocket(SharedConst.SOCKET_PATH) {
                 with(webSessionAuthManager) {
-
                     val session = call.getUserSession()
                     if (session != null) {
                         WebSocketCommunicationAdapter(this@webSocket, session, call.sessions.get()).start()

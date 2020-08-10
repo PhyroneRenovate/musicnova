@@ -73,11 +73,16 @@ class MusicNovaAudioProvider {
         override val currentTrack: AudioTrack?
             get() = lavaPlayer.playingTrack
 
+        override fun playTrack(track: AudioTrack?) {
+            lavaPlayer.playTrack(track)
+            lavaPlayer.isPaused = false
+        }
+
         override suspend fun playStream(url: String): Boolean {
             return try {
                 val track = playerManager.loadItem(url)
                 if (track != null) {
-                    lavaPlayer.playTrack(track)
+                    playTrack(track)
                     true
                 } else {
                     false
@@ -93,7 +98,7 @@ class MusicNovaAudioProvider {
                 localAudioSource.loadItem(playerManager, AudioReference(file.absolutePath, title))
             }
             return if (audioItem is AudioTrack) {
-                lavaPlayer.playTrack(audioItem)
+                playTrack(audioItem)
                 true
             } else {
                 false

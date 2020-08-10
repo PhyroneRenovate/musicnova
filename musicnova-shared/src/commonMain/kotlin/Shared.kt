@@ -42,7 +42,8 @@ enum class WsPacketID(val serializer: KSerializer<out WsPacket>) {
     PLAYER_UPDATE_IS_PLAYING(WsPacketBotPlayerUpdateIsPlaying.serializer()),
     PLAYER_UPDATE_SONG_INFO(WsPacketUpdateSongInfo.serializer()),
     PLAYER_UPDATE_SONG_DURATION(WsPacketUpdateSongDurationPosition.serializer()),
-    UPDATE_BOT_INFO(WsPacketUpdateBotInfo.serializer())
+    UPDATE_BOT_INFO(WsPacketUpdateBotInfo.serializer()),
+    PLAYER_STOP_TRACK(WsPacketBotPlayerStopTrack.serializer())
 }
 
 @Serializable
@@ -82,6 +83,7 @@ object WsPacketSerializer {
         is WsPacketBotUpdateIsConnected -> protoBuf.dump(WsPacketBotUpdateIsConnected.serializer(), this)
         is WsPacketUpdateBotInfo -> protoBuf.dump(WsPacketUpdateBotInfo.serializer(), this)
         is WsPacketUpdateSongDurationPosition -> protoBuf.dump(WsPacketUpdateSongDurationPosition.serializer(), this)
+        is WsPacketBotPlayerStopTrack -> protoBuf.dump(serializer(), this)
     }
 
     private fun WsPacket.packetID() = when (this) {
@@ -94,6 +96,7 @@ object WsPacketSerializer {
         is WsPacketBotUpdateIsConnected -> WsPacketID.UPDATE_IS_CONNECTED
         is WsPacketUpdateBotInfo -> WsPacketID.UPDATE_BOT_INFO
         is WsPacketUpdateSongDurationPosition -> WsPacketID.PLAYER_UPDATE_SONG_DURATION
+        is WsPacketBotPlayerStopTrack -> WsPacketID.PLAYER_STOP_TRACK
     }
 }
 
@@ -154,6 +157,10 @@ data class WsPacketUpdateSongInfo(
 data class WsPacketUpdateBotInfo(
         val data: BotData? = null
 ) : WsPacket()
+
+@Serializable
+object WsPacketBotPlayerStopTrack : WsPacket()
+
 
 /* "REST" (its like rest but protobuf instant of json... so its not) packets */
 
