@@ -134,6 +134,7 @@ class WiCommunicationWebModule : WebModule {
                     }
                 }
             }
+            session.onAdapterStop()
         }
 
         private suspend fun handlePacket(packetBytes: ByteArray) {

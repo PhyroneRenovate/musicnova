@@ -21,6 +21,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.js.Console
+import kotlin.random.Random
 
 val baseURL by lazy {
     val loc = window.location
@@ -89,3 +90,6 @@ fun setTheme(theme: WebTheme) {
 fun Console.debug(vararg any: Any?) {
     asDynamic().debug(any)
 }
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun randomId() = Random.nextDouble(Double.MIN_VALUE, Double.MAX_VALUE).toString()

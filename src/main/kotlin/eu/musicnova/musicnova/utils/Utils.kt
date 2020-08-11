@@ -11,14 +11,12 @@ import eu.musicnova.musicnova.MusicnovaApplication
 import eu.musicnova.musicnova.bot.Bot
 import eu.musicnova.musicnova.bot.BotEventListener
 import eu.musicnova.musicnova.bot.ChildBot
-import eu.musicnova.shared.BotIdentifier
 import eu.musicnova.shared.BotIdentifierJVMExt
 import kotlinx.coroutines.*
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.support.JpaEntityInformation
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import org.springframework.data.repository.NoRepositoryBean
-import org.springframework.data.repository.core.EntityInformation
 import org.springframework.transaction.annotation.Transactional
 import java.io.ByteArrayOutputStream
 import java.io.Serializable
@@ -89,8 +87,8 @@ class BotListenerAdapter : BotEventListener {
         }
     }
 
-    override fun onStatusChange() {
-        listenerList.forEachExisting { onStatusChange() }
+    override fun onStatusChanged() {
+        listenerList.forEachExisting { onStatusChanged() }
     }
 
     override fun onPlayerContinationUpdate() {

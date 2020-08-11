@@ -7,6 +7,6 @@ interface BotPlayerEventListner {
 }
 
 interface BotEventListener : BotPlayerEventListner {
-    fun onStatusChange()
+    fun onStatusChanged()
 
 }

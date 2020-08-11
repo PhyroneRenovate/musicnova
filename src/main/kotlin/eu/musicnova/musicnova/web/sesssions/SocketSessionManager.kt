@@ -57,6 +57,7 @@ class SocketSessionManager {
                 if (bot is MusicBot) {
                     adapter.sendPacket(WsPacketBotPlayerUpdateVolume(bot.audioController.volume))
                     adapter.sendPacket(WsPacketBotPlayerUpdateIsPlaying(bot.audioController.isPlaying))
+                    adapter.sendPacket(WsPacketBotUpdateIsConnected(bot.isConnected))
                     adapter.sendPacket(bot.audioController.currentTrack.toInfoPacket())
                     adapter.sendPacket(WsPacketUpdateSongDurationPosition(bot.audioController.currentTrack?.position
                             ?: 0))
@@ -95,6 +96,9 @@ class SocketSessionManager {
             adapter.stop()
         }
 
+        fun onAdapterStop() {
+            trackUpdateSendJob?.cancel()
+        }
 
         private fun handlePacketBotPlayerUpdateVolume(packet: WsPacketBotPlayerUpdateVolume) {
             assert(packet.newVolume in (0..100))
@@ -126,7 +130,21 @@ class SocketSessionManager {
                 is WsPacketBotPlayerUpdateIsPlaying -> handlePacketBotPlayerUpdateIsPlaying(packet)
                 is WsPacketUpdateSongDurationPosition -> handlePacketBotPlayerUpdateSongDuration(packet)
                 is WsPacketBotPlayerStopTrack -> handlePacketBotPlayerStopTrack()
+                is WsPacketBotUpdateIsConnected -> handlePacketBotUpdateIsConnected(packet)
                 else -> logger.warn("Unhandled Packet: $packet")
+            }
+        }
+
+        private suspend fun handlePacketBotUpdateIsConnected(packet: WsPacketBotUpdateIsConnected) {
+            val bot = currentBot
+            if (bot != null) {
+                val isBotConnected = bot.isConnected
+                val isPacketExpectConnected = packet.isConnected
+                when {
+                    isBotConnected == isPacketExpectConnected -> return
+                    isPacketExpectConnected -> bot.connect()
+                    else -> bot.disconnect()
+                }
             }
         }
 
@@ -170,9 +188,13 @@ class SocketSessionManager {
         }
 
         private inner class SocketBotListener : BotEventListener {
-            override fun onStatusChange() {
-
+            override fun onStatusChanged() {
+                val bot = currentBot
+                if (bot != null) {
+                    GlobalScope.launch { adapter.sendPacket(WsPacketBotUpdateIsConnected(bot.isConnected)) }
+                }
             }
+
 
             override fun onPlayerContinationUpdate() {
                 onMusicBot { bot ->

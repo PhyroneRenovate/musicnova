@@ -4,6 +4,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.github.manevolent.ts3j.audio.Microphone
 import com.github.manevolent.ts3j.enums.CodecType
+import com.github.manevolent.ts3j.event.DisconnectedEvent
 import com.github.manevolent.ts3j.event.TS3Listener
 import com.github.manevolent.ts3j.event.TextMessageEvent
 import com.github.manevolent.ts3j.identity.LocalIdentity
@@ -147,6 +148,7 @@ class TeamspeakBotManager {
                     socket.microphone = this
                     socket.setIdentity(dao.identity?.identity ?: LocalIdentity.generateNew(20))
                     socket.nickname = dao.nickname
+                    socket.addListener(SocketEventListener())
                     dao.hwid?.also { socket.hwid = it }
                 }
 
@@ -163,8 +165,8 @@ class TeamspeakBotManager {
             dao.channel?.also {
                 ioTask { tsSocket.joinChannel(it, dao.channelPassword) }
             }
-
             this.tsSocket = tsSocket
+            listenerAdapter.onStatusChanged()
         }
 
         fun resolveAddress(resoveMode: TeamspeakResoveMode, host: String, port: Int): InetSocketAddress {
@@ -184,9 +186,9 @@ class TeamspeakBotManager {
                 dao.connected = false
                 teamspeakBotDatabase.save(dao)
             }
-            listenerAdapter.onStatusChange()
             ioTask { tsSocket?.disconnect() }
             tsSocket = null
+            listenerAdapter.onStatusChanged()
         }
 
         private val listenerAdapter = BotListenerAdapter()
@@ -240,12 +242,18 @@ class TeamspeakBotManager {
             override fun suggest(): List<String> = listOf()
         }
 
-        override val audioController by lazy { audioProvider[uuid, listenerAdapter] }
-        private val audioPlayer by lazy {
-            audioController.lavaPlayer.also { player ->
-                // Prevent Opus AudioFrame Passthrough due to TeamSpeak Packet Size limit (f.e. youtube)
-                player.setFilterFactory { _, _, _ -> listOf() }
+        inner class SocketEventListener : TS3Listener {
+            override fun onDisconnected(e: DisconnectedEvent?) {
+                listenerAdapter.onStatusChanged()
             }
+        }
+
+        override val audioController = audioProvider[uuid, listenerAdapter]
+        private val audioPlayer = audioController.lavaPlayer
+
+        init {
+            // Prevent Opus AudioFrame Passthrough due to TeamSpeak Packet Size limit (f.e. youtube)
+            audioPlayer.setFilterFactory { _, _, _ -> listOf() }
         }
 
         override fun getCodec(): CodecType = CodecType.OPUS_MUSIC

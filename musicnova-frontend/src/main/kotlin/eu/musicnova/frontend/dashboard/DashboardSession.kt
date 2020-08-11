@@ -7,7 +7,7 @@ import eu.musicnova.shared.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.html.InputType
-import kotlinx.html.MATH
+import kotlinx.html.TagConsumer
 import kotlinx.html.dom.append
 import kotlinx.html.id
 import kotlinx.html.js.*
@@ -20,8 +20,6 @@ import kotlin.browser.window
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import kotlin.js.Math
-import kotlin.random.Random
 
 class DashboardSession {
     var socket: WebSocket? = null
@@ -44,6 +42,7 @@ class DashboardSession {
         socket.onopen = {
             sendQueuedPackets()
             lock.resume(socket)
+            //socket.send(WsPacketSwitchBot(BotIdentifier(32124324323, -3211234113, 23)))
         }
         socket.onclose = {
             handleSocketClose(it)
@@ -70,33 +69,40 @@ class DashboardSession {
             is WsPacketBotPlayerUpdateIsPlaying -> handlePlayerIsPlaying(packet)
             is WsPacketUpdateBotInfo -> handleBotUpdatePacket(packet)
             is WsPacketUpdateSongDurationPosition -> handleUpdateSongDuration(packet)
+            is WsPacketBotUpdateIsConnected -> handleBotUpdateIsConnected(packet)
             else -> console.error("unhandled packet", packet)
         }
     }
 
-    private fun handleUpdateSongDuration(packetPosition: WsPacketUpdateSongDurationPosition) {
-        setPositionSliderValue(packetPosition.postition)
+    private fun handleBotUpdateIsConnected(packet: WsPacketBotUpdateIsConnected) {
+        botConnectedSwitch.checked = packet.isConnected
     }
 
-    fun setPositionSliderValue(position: Long) {
+    private fun handleUpdateSongDuration(packetPosition: WsPacketUpdateSongDurationPosition) {
         if (!volumeDurationSliderUpdateLock) {
-            setPositionLabelValue(position)
-            playerDurationSlider.value = position.toString()
-
+            setPositionSliderValue(packetPosition.postition)
         }
     }
 
-    fun setPositionLabelValue(position: Long) {
-        playerCurrentTimeLabelSpan.innerText = millisToHumantTime(position)
-    }
-
-    fun millisToHumantTime(millis: Long): String {
+    private fun millisToHumantTime(millis: Long): String {
         val totalSec = millis / 1000
         val totalMins = totalSec / 60
         val hours = totalMins / 60
         val mins = totalMins - (hours * 60)
         val secs = totalSec - (totalMins * 60)
-        return (if (hours > 1) "$hours:" else "") + (if (mins < 10) "0" else "") + "$mins:$secs"
+        return "${if (hours > 0) "$hours:${if (mins < 10) "0" else ""}" else ""}$mins:${if (secs < 10) "0" else ""}$secs"
+    }
+
+    private fun setPositionLabelValue(position: Long) {
+        playerCurrentTimeLabelSpan.innerText = millisToHumantTime(position)
+    }
+
+    private fun setPositionSliderValue(position: Long) {
+        if (!volumeDurationSliderUpdateLock) {
+            setPositionLabelValue(position)
+            playerDurationSlider.value = position.toString()
+
+        }
     }
 
     private fun handleBotUpdatePacket(packet: WsPacketUpdateBotInfo) {
@@ -121,7 +127,7 @@ class DashboardSession {
         }
     }
 
-    fun handleSocketClose(event: Event) {
+    private fun handleSocketClose(event: Event) {
         console.log("socked closed", event)
         window.location.reload()
     }
@@ -213,41 +219,113 @@ class DashboardSession {
     private lateinit var playerMaxTimeLabelSpan: HTMLSpanElement
     private lateinit var playerCurrentTimeLabelSpan: HTMLSpanElement
     private lateinit var playPauseIcon: HTMLElement
+    private lateinit var botConnectedSwitch: HTMLInputElement
     private var volumeDurationSliderUpdateLock = false
     private var volumeSliderUpdateLock = false
+
+
+    private fun TagConsumer<HTMLElement>.appendTopMenu() {
+        nav(classes = "navbar is-primary") {
+            role = "navigation"
+            div(classes = "navbar-item") {
+                a {
+                    +"Select Bot"
+                    onClickFunction = {
+                        openBotSelect()
+                    }
+                }
+            }
+            div("navbar-end") {
+                div("navbar-item") {
+                    div("field") {
+                        val randomID = randomId()
+                        botConnectedSwitch = input(classes = "switch is-info") {
+                            type = InputType.checkBox
+                            id = randomID
+                            onChangeFunction = { sendPacket(WsPacketBotUpdateIsConnected(botConnectedSwitch.checked)) }
+                        }
+                        label {
+                            htmlFor = randomID
+                            +"Connected"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun TagConsumer<HTMLElement>.appendFootPlayer() {
+        footer("footer") {
+            div("columns") {
+                button(classes = "button") { disabled = true;i("fas fa-backward") {} }
+                playerPlayPauseButton = button(classes = "button") {
+                    disabled = true
+                    playPauseIcon = i("fas fa-play") {}
+                    onClickFunction = {
+                        sendPacket(WsPacketBotPlayerUpdateIsPlaying())
+                    }
+                }
+                playerStopButton = button(classes = "button") {
+                    disabled = true;
+                    i("fas fa-stop") { }
+                    onClickFunction = {
+                        sendPacket(WsPacketBotPlayerStopTrack)
+                    }
+                }
+                button(classes = "button") { disabled = true;i("fas fa-forward") { } }
+            }
+
+            div("foot-lineone-end") {
+                playerVolumeSlider = input(classes = "slider is-fullwidth is-info is-circle") {
+                    disabled = true
+                    type = InputType.range
+                    disabled
+                    min = "0"
+                    max = "100"
+                    value = "0"
+                    onChangeFunction = {
+                        volumeSliderUpdateLock = false
+                        val newVolume = playerVolumeSlider.value.toIntOrNull()
+                        if (newVolume != null) GlobalScope.launch { sendPacket(WsPacketBotPlayerUpdateVolume(newVolume)) }
+                    }
+
+                    onInputFunction = {
+                        volumeSliderUpdateLock = true
+
+                    }
+                }
+
+
+            }
+            div("columns") {
+                playerDurationSlider = input(classes = "slider is-fullwidth is-success") {
+                    disabled = true
+                    type = InputType.range
+                    onChangeFunction = {
+                        volumeDurationSliderUpdateLock = false
+                        val newDuration = playerDurationSlider.value.toLongOrNull()
+                        if (newDuration != null) GlobalScope.launch { sendPacket(WsPacketUpdateSongDurationPosition(newDuration)) }
+                    }
+                    onInputFunction = {
+                        volumeDurationSliderUpdateLock = true
+                        setPositionLabelValue(playerDurationSlider.value.toLong())
+                    }
+                }
+                span {
+                    playerCurrentTimeLabelSpan = span { +"0:00" }
+                    +"/"
+                    playerMaxTimeLabelSpan = span { +"0:00" }
+                }
+            }
+        }
+    }
 
 
     private fun buildPage() {
         newBody().append {
             div("sticky-top") {
-                nav("navbar is-primary") {
-                    role = "navigation"
-                    div("navbar-item") {
-                        a {
-                            +"Select Bot"
-                            onClickFunction = {
-                                openBotSelect()
-                            }
-                        }
-                    }
-                    div("navbar-end") {
-                        div("navbar-item") {
-                            div("field") {
-                                val checkBotId = Random.nextDouble(Double.MIN_VALUE, Double.MAX_VALUE).toString()
-                                input(classes = "switch is-info", type = InputType.checkBox) {
-                                    id = checkBotId
-                                    onChangeFunction = {
-                                        console.log("toggle connected")
-                                    }
-                                }
-                                label {
-                                    htmlFor = checkBotId
-                                    +"Enabled"
-                                }
-                            }
-                        }
-                    }
-                }
+                appendTopMenu()
+
             }
             div("container is-fluid") {
                 div("page-content") {
@@ -258,67 +336,7 @@ class DashboardSession {
             }
             div("foot-spacer") { }
             div("footer-fix") {
-                footer("footer") {
-                    div("columns") {
-                        button(classes = "button") { disabled = true;i("fas fa-backward") {} }
-                        playerPlayPauseButton = button(classes = "button") {
-                            disabled = true
-                            playPauseIcon = i("fas fa-play") {}
-                            onClickFunction = {
-                                sendPacket(WsPacketBotPlayerUpdateIsPlaying())
-                            }
-                        }
-                        playerStopButton = button(classes = "button") {
-                            disabled = true; i("fas fa-stop") { }
-                            onClickFunction = {
-                                sendPacket(WsPacketBotPlayerStopTrack)
-                            }
-                        }
-                        button(classes = "button") { disabled = true;i("fas fa-forward") { } }
-                    }
-
-                    div("foot-lineone-end") {
-                        playerVolumeSlider = input(classes = "slider is-fullwidth is-info is-circle") {
-                            disabled = true
-                            type = InputType.range
-                            disabled
-                            min = "0"
-                            max = "100"
-                            value = "0"
-                            onChangeFunction = {
-                                volumeSliderUpdateLock = false
-                                val newVolume = playerVolumeSlider.value.toIntOrNull()
-                                if (newVolume != null) GlobalScope.launch { sendPacket(WsPacketBotPlayerUpdateVolume(newVolume)) }
-                            }
-
-                            onInputFunction = {
-                                volumeSliderUpdateLock = true
-                            }
-                        }
-
-
-                    }
-                    div("columns") {
-                        playerDurationSlider = input(classes = "slider is-fullwidth is-success") {
-                            disabled = true
-                            type = InputType.range
-                            onChangeFunction = {
-                                volumeDurationSliderUpdateLock = false
-                                val newDuration = playerDurationSlider.value.toLongOrNull()
-                                if (newDuration != null) GlobalScope.launch { sendPacket(WsPacketUpdateSongDurationPosition(newDuration)) }
-                            }
-                            onInputFunction = {
-                                volumeDurationSliderUpdateLock = true
-                                setPositionLabelValue(playerDurationSlider.value.toLong())
-                            }
-                        }
-                        span {
-                            playerMaxTimeLabelSpan = span { +"0:00" }
-                            +"/"
-                            playerCurrentTimeLabelSpan = span { +"0:00" }
-                        }
-                    }
-                }
+                appendFootPlayer()
             }
         }
 

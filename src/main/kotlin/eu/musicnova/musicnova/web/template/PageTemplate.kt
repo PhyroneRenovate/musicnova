@@ -16,7 +16,6 @@ class PageTemplate(
     override fun HTML.apply() {
         head {
             title("MusicNova")
-            //script(src = "/assets/3rd/ionicons/ionicons.js") { }
             script(src = "/assets/3rd/ionicons/ionicons/ionicons.esm.js", type = "module") { }
             script(src = "/assets/3rd/ionicons/ionicons/ionicons.js") { attributes["nomodule"] = "" }
             insert(PageStartDataTemplate(startData)) {}

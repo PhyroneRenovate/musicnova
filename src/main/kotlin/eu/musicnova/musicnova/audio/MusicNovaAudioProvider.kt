@@ -9,8 +9,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioReference
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import eu.musicnova.musicnova.bot.BotEventListener
 import eu.musicnova.musicnova.bot.BotPlayerEventListner
-import eu.musicnova.musicnova.database.jpa.AudioContollerDatabase
-import eu.musicnova.musicnova.database.jpa.PersistentAudioControllerData
+import eu.musicnova.musicnova.database.jpa.*
 import eu.musicnova.musicnova.utils.asnycIOTask
 import eu.musicnova.musicnova.utils.loadItem
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +31,9 @@ class MusicNovaAudioProvider {
     @Autowired
     lateinit var audioControllerDatabase: AudioContollerDatabase
 
+    private val localTrackFolder = File("data/audio")
+    init { localTrackFolder.mkdirs() }
+
     private val localAudioSource = LocalAudioSourceManager()
 
     operator fun get(id: UUID, listener: BotPlayerEventListner) = getOrCreate(
@@ -39,7 +41,8 @@ class MusicNovaAudioProvider {
                     .orElseGet { PersistentAudioControllerData(id, 100) },
             listener)
 
-    private fun getOrCreate(dao: PersistentAudioControllerData, listener: BotPlayerEventListner): LavaPlayerAudioController = ProvidedAudioControllerImpl(dao, listener)
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun getOrCreate(dao: PersistentAudioControllerData, listener: BotPlayerEventListner): LavaPlayerAudioController = ProvidedAudioControllerImpl(dao, listener)
 
     private inner class ProvidedAudioControllerImpl(
             private val data: PersistentAudioControllerData,
@@ -102,6 +105,14 @@ class MusicNovaAudioProvider {
                 true
             } else {
                 false
+            }
+        }
+
+        suspend fun playTrack(track: PersistentAudioTrackData) {
+            when (track) {
+                is PersistentLocalAudioTrackData -> playFile(File(localTrackFolder, track.file), track.title)
+                is PersistentRemoteAudioTrackData -> playStream(track.url)
+                else -> throw IllegalArgumentException("unsupported track type: ${track::class.java.name}")
             }
         }
 

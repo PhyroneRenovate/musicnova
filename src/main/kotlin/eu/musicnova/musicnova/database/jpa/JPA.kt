@@ -186,6 +186,29 @@ data class PersistentWebUserSessionData(
         var loginDate: LocalDateTime
 )
 
+@Entity
+@Table(name = "audio_track")
+@Inheritance(strategy = InheritanceType.JOINED)
+open class PersistentAudioTrackData(
+        open val title: String,
+        @Id open val uuid: UUID = UUID.randomUUID()
+)
+
+@Entity
+@Table(name = "audio_track_local")
+open class PersistentLocalAudioTrackData(
+        title: String,
+        open val file: String
+) : PersistentAudioTrackData(title)
+
+@Entity
+@Table(name = "audio_track_remote")
+open class PersistentRemoteAudioTrackData(
+        title: String,
+        open val url: String
+) : PersistentAudioTrackData(title)
+
+
 interface WebUserSessionDatabase : MnRepository<PersistentWebUserSessionData, String> {
     @Modifying
     fun deleteByLastSeenDateAfter(deadLine: LocalDateTime)
