@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.serialization") version "1.3.70"
+    kotlin("plugin.serialization") version "1.4.0"
 }
 
 group = "eu.musicnova"
@@ -9,7 +9,7 @@ group = "eu.musicnova"
 repositories {
     mavenCentral()
 }
-val ser_version = "0.20.0"
+val ser_version = "1.0.0-RC"
 kotlin {
     /* Targets configuration omitted. 
     *  To find out how to configure the targets, please follow the link:

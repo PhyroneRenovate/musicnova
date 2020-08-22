@@ -11,7 +11,7 @@ plugins {
     id("org.jetbrains.dokka") version "0.10.1"
     id("com.github.ksoichiro.build.info") version "0.2.0"
 
-    val KOTLIN_VERSION = "1.3.72"
+    val KOTLIN_VERSION = "1.4.0"
     kotlin("jvm") version KOTLIN_VERSION
     kotlin("kapt") version KOTLIN_VERSION
     kotlin("plugin.spring") version KOTLIN_VERSION
@@ -64,7 +64,8 @@ dependencies {
     implementation(project(":musicnova-shared"))
     kapt("org.springframework.boot:spring-boot-configuration-processor")
     implementation("org.fusesource.jansi:jansi:1.18")
-    compile(group = "com.uchuhimo", name = "konf", version = "0.22.1")
+    //compile(group = "com.uchuhimo", name = "konf", version = "0.22.1")
+    implementation("com.github.Cybermaxke:konf:449becc276")
     runtimeOnly("com.h2database:h2")
     runtimeOnly("mysql:mysql-connector-java")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
@@ -109,7 +110,7 @@ dependencies {
             "ktor-jackson",
             "ktor-auth"
     ).forEach { name ->
-        implementation("io.ktor", name, "1.3.2")
+        implementation("io.ktor", name, "1.4.0")
     }
 
     listOf("exposed-core", "exposed-dao", "exposed-jdbc", "exposed-jodatime", "exposed-java-time").forEach { name ->
@@ -126,10 +127,13 @@ dependencies {
     implementation("com.eclipsesource.j2v8:j2v8_win32_x86_64:4.6.0")
     implementation("com.eclipsesource.j2v8:j2v8_macosx_x86_64:4.6.0")
     implementation("com.eclipsesource.j2v8:j2v8_win32_x86:4.6.0")
-    implementation("org.python:jython:2.7.2")
-    implementation("org.luaj:luaj-jse:3.0.1")
-    implementation("de.swirtz:ktsRunner:0.0.8")
-    implementation("com.zaxxer:nuprocess:2.0.0")
+
+    //TODO
+    //implementation("org.python:jython:2.7.2")
+    //implementation("org.luaj:luaj-jse:3.0.1")
+    //implementation("de.swirtz:ktsRunner:0.0.8")
+    //implementation("com.zaxxer:nuprocess:2.0.0")
+
     implementation("com.google.guava:guava:29.0-jre")
     implementation("org.jgrapht:jgrapht-core:1.5.0")
     implementation("com.jcabi:jcabi-manifests:1.1")
