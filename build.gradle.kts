@@ -29,6 +29,7 @@ allprojects {
     repositories {
         mavenCentral()
         jcenter()
+        mavenLocal()
         maven("https://jitpack.io/")
         maven("https://repo.phyrone.de/repository/j2v8-mirror/")
         maven("https://libraries.minecraft.net")
@@ -62,10 +63,20 @@ dependencies {
     implementation("com.github.lalyos:jfiglet:0.0.8")
 
     implementation(project(":musicnova-shared"))
-    kapt("org.springframework.boot:spring-boot-configuration-processor")
+    //kapt("org.springframework.boot:spring-boot-configuration-processor")
     implementation("org.fusesource.jansi:jansi:1.18")
-    //compile(group = "com.uchuhimo", name = "konf", version = "0.22.1")
-    implementation("com.github.Cybermaxke:konf:449becc276")
+    implementation(group = "com.uchuhimo", name = "konf", version = "0.22.1")
+    listOf(
+            "konf-core",
+            "konf-hocon",
+            "konf-toml",
+            "konf-xml",
+            "konf-yaml"
+    ).forEach { name ->
+        //implementation("com.github.Cybermaxke.konf:$name:449becc276")
+    }
+
+
     runtimeOnly("com.h2database:h2")
     runtimeOnly("mysql:mysql-connector-java")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
@@ -76,7 +87,7 @@ dependencies {
 
 
     implementation("info.picocli:picocli:4.4.0")
-    kapt("info.picocli:picocli-codegen:4.4.0")
+    //kapt("info.picocli:picocli-codegen:4.4.0")
 
     implementation("com.github.oshi:oshi-core:5.2.0")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.11.1")
@@ -117,7 +128,7 @@ dependencies {
         implementation("org.jetbrains.exposed", name, "0.24.1")
     }
 
-    kapt("org.inferred:freebuilder:2.6.1")
+    //kapt("org.inferred:freebuilder:2.6.1")
     implementation("org.inferred:freebuilder:2.6.1")
 
     implementation("org.jline:jline:3.16.0")
@@ -139,9 +150,9 @@ dependencies {
     implementation("com.jcabi:jcabi-manifests:1.1")
     implementation("com.google.jimfs:jimfs:1.1")
     implementation("com.google.auto.factory:auto-factory:1.0-beta8")
-    kapt("com.google.auto.factory:auto-factory:1.0-beta8")
+    //kapt("com.google.auto.factory:auto-factory:1.0-beta8")
     implementation("com.google.auto.service:auto-service:1.0-rc7")
-    kapt("com.google.auto.service:auto-service:1.0-rc7")
+    //kapt("com.google.auto.service:auto-service:1.0-rc7")
 
 }
 tasks {
@@ -164,7 +175,7 @@ tasks {
         dependsOn(JavaPlugin.PROCESS_RESOURCES_TASK_NAME)
     }
     create<NpmTask>("build-webpack") {
-        dependsOn("npmInstall","pre-copy-web-files")
+        dependsOn("npmInstall", "pre-copy-web-files")
         setArgs(listOf("run", "webpack"))
     }
     create<Copy>("copy-assets") {
@@ -182,7 +193,7 @@ tasks {
     classes {
         dependsOn("copy-web-files")
     }
-    clean{
+    clean {
         delete("src/main/web/node_modules")
     }
     springBoot {

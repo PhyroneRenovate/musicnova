@@ -6,13 +6,11 @@ import eu.musicnova.frontend.thrd.Bulma
 import eu.musicnova.frontend.thrd.Swal
 import eu.musicnova.frontend.thrd.fire
 import eu.musicnova.frontend.utils.pageStartData
-import eu.musicnova.frontend.utils.send
-import eu.musicnova.frontend.utils.wsBaseURL
-import eu.musicnova.shared.*
+import eu.musicnova.shared.LoginStatus
+import kotlinx.browser.window
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.w3c.dom.*
-import kotlin.browser.window
+
 
 fun main() {
     console.log("Started...")

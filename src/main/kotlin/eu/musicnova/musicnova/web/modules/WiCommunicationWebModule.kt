@@ -47,7 +47,7 @@ class WiCommunicationWebModule : WebModule {
         routing {
             post(SharedConst.INTERNAL_LOGIN_PATH) {
                 val requestBytes = call.receive<ByteArray>()
-                val request = protoBuf.load(PacketLoginRequest.serializer(), requestBytes)
+                val request = protoBuf.decodeFromByteArray(PacketLoginRequest.serializer(), requestBytes)
                 val user = webUserAuthManager[request.username]
 
                 val response = if (user?.checkPassword(request.password) == true) {
@@ -57,13 +57,13 @@ class WiCommunicationWebModule : WebModule {
                     PacketLoginResponse(LoginStatusResponse.INVALID)
                 }
 
-                call.respondBytes(protoBuf.dump(PacketLoginResponse.serializer(), response), ContentType.Application.ProtoBuf)
+                call.respondBytes(protoBuf.encodeToByteArray(PacketLoginResponse.serializer(), response), ContentType.Application.ProtoBuf)
             }
 
             post(SharedConst.INTERNAL_SET_THEME_PATH) {
-                val request = protoBuf.load(ChangeThemeRequest.serializer(), call.receive())
+                val request = protoBuf.decodeFromByteArray(ChangeThemeRequest.serializer(), call.receive())
                 call.sessions.set(request.newTheme)
-                call.respondBytes(protoBuf.dump(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
+                call.respondBytes(protoBuf.encodeToByteArray(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
             }
 
             post(SharedConst.INTERNAL_GET_BOTS_REQUEST) {
@@ -78,12 +78,12 @@ class WiCommunicationWebModule : WebModule {
                     )
                 })
 
-                call.respondBytes(protoBuf.dump(PacketBotsResponse.serializer(), response), ContentType.Application.ProtoBuf)
+                call.respondBytes(protoBuf.encodeToByteArray(PacketBotsResponse.serializer(), response), ContentType.Application.ProtoBuf)
             }
 
             post(SharedConst.INTERNAL_SET_SELECT_COOkIE) {
-                call.sessions.set(protoBuf.load(BotIdentifier.serializer(), call.receive()))
-                call.respondBytes(protoBuf.dump(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
+                call.sessions.set(protoBuf.decodeFromByteArray(BotIdentifier.serializer(), call.receive()))
+                call.respondBytes(protoBuf.encodeToByteArray(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
             }
 
             post(SharedConst.SOCKET_PATH) {

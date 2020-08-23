@@ -42,10 +42,7 @@ data class PersistentTeamspeakBotData(
         var serverVersion: TeamspeakClientProtocolVersion? = null,
         @ManyToOne(optional = true)
         var identity: PersistentTeamspeakIdentity? = null
-) : PersistentBotData() {
-
-
-}
+) : PersistentBotData()
 
 @Entity
 @Table(name = "teamspeak_identity")

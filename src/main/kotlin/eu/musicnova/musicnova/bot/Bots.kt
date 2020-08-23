@@ -1,7 +1,6 @@
 package eu.musicnova.musicnova.bot
 
 import eu.musicnova.musicnova.audio.AudioController
-import org.python.tests.Child
 import java.util.*
 
 interface Bot : TerminalConfigurable {

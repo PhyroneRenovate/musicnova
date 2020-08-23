@@ -19,8 +19,8 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$ser_version")
-                api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf-common:$ser_version")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:$ser_version")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$ser_version")
             }
         }
         val commonTest by getting {
@@ -32,7 +32,7 @@ kotlin {
             }
         }
     }
-    js() {
+    js {
         browser()
         compilations["main"].defaultSourceSet {
             repositories {
@@ -40,12 +40,12 @@ kotlin {
             }
             dependencies {
                 implementation(kotlin("stdlib-js"))
-                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$ser_version")
-                api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf-js:$ser_version")
+                //api("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$ser_version")
+                //api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf-js:$ser_version")
             }
         }
     }
-    jvm() {
+    jvm {
         compilations["main"].defaultSourceSet {
             repositories {
                 mavenCentral()
@@ -53,8 +53,8 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-jdk8"))
 
-                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$ser_version")
-                api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$ser_version")
+                //api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$ser_version")
+                //api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$ser_version")
             }
         }
     }

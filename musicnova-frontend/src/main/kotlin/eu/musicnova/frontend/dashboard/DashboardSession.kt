@@ -16,7 +16,7 @@ import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.w3c.dom.*
 import org.w3c.dom.events.Event
-import kotlin.browser.window
+import kotlinx.browser.window
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -266,7 +266,7 @@ class DashboardSession {
                     }
                 }
                 playerStopButton = button(classes = "button") {
-                    disabled = true;
+                    disabled = true
                     i("fas fa-stop") { }
                     onClickFunction = {
                         sendPacket(WsPacketBotPlayerStopTrack)

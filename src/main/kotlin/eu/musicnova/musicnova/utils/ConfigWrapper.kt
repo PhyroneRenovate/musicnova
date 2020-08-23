@@ -27,7 +27,7 @@ class ConfigWrapper(
 
     override fun withSource(source: Source) = config.withSource(source)
 
-    fun load(file: File) = load(java.io.FileInputStream(file), file.name)
+    fun load(file: File) = load(FileInputStream(file), file.name)
     fun load(stream: InputStream, name: String) =
             load(stream, ConfigFormat.findByEndingOrNull(name.split(".").last()) ?: fallbackFormat)
 
@@ -39,7 +39,7 @@ class ConfigWrapper(
     fun save(stream: OutputStream, name: String) =
             save(stream, ConfigFormat.findByEndingOrNull(name.split(".").last()) ?: fallbackFormat)
 
-    fun save(file: File) = save(java.io.FileOutputStream(file), file.name)
+    fun save(file: File) = save(FileOutputStream(file), file.name)
 
 
     override val itemWithNames: List<Pair<Item<*>, String>>

@@ -2,6 +2,7 @@ package eu.musicnova.frontend.utils
 
 
 import eu.musicnova.shared.*
+import kotlinx.browser.document
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
@@ -15,8 +16,7 @@ import org.w3c.dom.get
 import org.w3c.xhr.ARRAYBUFFER
 import org.w3c.xhr.XMLHttpRequest
 import org.w3c.xhr.XMLHttpRequestResponseType
-import kotlin.browser.document
-import kotlin.browser.window
+import kotlinx.browser.window
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -53,8 +53,7 @@ val pageStartData by lazy { loadPageStartData() }
 private fun loadPageStartData(): PageStartData {
     val pageStartBaseString = window[SharedConst.START_DATA_FIELD] as String
     val pageStartBytes = window.atob(pageStartBaseString)
-    @OptIn(ExperimentalStdlibApi::class)
-    return protoBuf.load(PageStartData.serializer(), pageStartBytes.encodeToByteArray())
+    return protoBuf.decodeFromByteArray(PageStartData.serializer(), pageStartBytes.encodeToByteArray())
 }
 
 suspend inline fun <reified REQ, reified RES> postRequest(url: String, request: REQ, requestSerializer: KSerializer<REQ>, responseSerializer: KSerializer<RES>) = suspendCoroutine<RES> { lock ->
@@ -68,7 +67,7 @@ suspend inline fun <reified REQ, reified RES> postRequest(url: String, request: 
                 lock.resumeWithException(IllegalStateException("wrong response"))
             } else {
                 val bytes = Uint8Array(buffer).unsafeCast<ByteArray>()
-                lock.resume(protoBuf.load(responseSerializer, bytes))
+                lock.resume(protoBuf.decodeFromByteArray(responseSerializer, bytes))
             }
         }.getOrElse {
             lock.resumeWithException(it)
@@ -77,7 +76,7 @@ suspend inline fun <reified REQ, reified RES> postRequest(url: String, request: 
     }
     httpRequest.open("POST", url)
 
-    httpRequest.send(protoBuf.dump(requestSerializer, request))
+    httpRequest.send(protoBuf.encodeToByteArray(requestSerializer, request))
 }
 
 private val styleLink by lazy { document.getElementById(SharedConst.STYLE_LINK_ID) as HTMLLinkElement }

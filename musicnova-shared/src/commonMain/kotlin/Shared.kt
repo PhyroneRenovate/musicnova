@@ -22,7 +22,11 @@ object SharedConst {
     const val STYLE_LINK_ID = "style-link"
 }
 
-val protoBuf = ProtoBuf(false)
+@Suppress("EXPERIEMTAL")
+val protoBuf = ProtoBuf {
+    this.encodeDefaults = true
+
+}
 
 @Serializable
 data class PageStartData(
@@ -46,6 +50,7 @@ enum class WsPacketID(val serializer: KSerializer<out WsPacket>) {
     PLAYER_STOP_TRACK(WsPacketBotPlayerStopTrack.serializer())
 }
 
+
 @Serializable
 data class WsPacketHead(
         val packetID: WsPacketID
@@ -56,7 +61,7 @@ object WsPacketSerializer {
     @JvmOverloads
     fun serialize(packet: WsPacket): ByteArray {
         val packetID = packet.packetID()
-        val packetHeadBytes = protoBuf.dump(WsPacketHead.serializer(), WsPacketHead(packetID))
+        val packetHeadBytes = protoBuf.encodeToByteArray(WsPacketHead.serializer(), WsPacketHead(packetID))
         val packetBodyBytes = packet.toBytes()
         return byteArrayOf(packetHeadBytes.size.toByte()) + packetHeadBytes + packetBodyBytes
     }
@@ -65,25 +70,25 @@ object WsPacketSerializer {
         val offset = bytes.offSet()
         val headBytes = bytes.copyOfRange(1, offset + 1)
         val bodyBytes = bytes.copyOfRange(offset + 1, bytes.size)
-        val head = protoBuf.load(WsPacketHead.serializer(), headBytes)
+        val head = protoBuf.decodeFromByteArray(WsPacketHead.serializer(), headBytes)
         val packetID = head.packetID
-        return protoBuf.load(packetID.serializer, bodyBytes)
+        return protoBuf.decodeFromByteArray(packetID.serializer, bodyBytes)
     }
 
     @Suppress("NOTHING_TO_INLINE")
     private inline fun ByteArray.offSet() = first().toInt()
 
     private fun WsPacket.toBytes() = when (this) {
-        is WsPacketClose -> protoBuf.dump(WsPacketClose.serializer(), this)
-        is WsPacketBotPlayerUpdateVolume -> protoBuf.dump(WsPacketBotPlayerUpdateVolume.serializer(), this)
-        is WsPacketBotPlayerPlayStream -> protoBuf.dump(WsPacketBotPlayerPlayStream.serializer(), this)
-        is WsPacketUpdateSelectedBot -> protoBuf.dump(WsPacketUpdateSelectedBot.serializer(), this)
-        is WsPacketBotPlayerUpdateIsPlaying -> protoBuf.dump(WsPacketBotPlayerUpdateIsPlaying.serializer(), this)
-        is WsPacketUpdateSongInfo -> protoBuf.dump(WsPacketUpdateSongInfo.serializer(), this)
-        is WsPacketBotUpdateIsConnected -> protoBuf.dump(WsPacketBotUpdateIsConnected.serializer(), this)
-        is WsPacketUpdateBotInfo -> protoBuf.dump(WsPacketUpdateBotInfo.serializer(), this)
-        is WsPacketUpdateSongDurationPosition -> protoBuf.dump(WsPacketUpdateSongDurationPosition.serializer(), this)
-        is WsPacketBotPlayerStopTrack -> protoBuf.dump(serializer(), this)
+        is WsPacketClose -> protoBuf.encodeToByteArray(WsPacketClose.serializer(), this)
+        is WsPacketBotPlayerUpdateVolume -> protoBuf.encodeToByteArray(WsPacketBotPlayerUpdateVolume.serializer(), this)
+        is WsPacketBotPlayerPlayStream -> protoBuf.encodeToByteArray(WsPacketBotPlayerPlayStream.serializer(), this)
+        is WsPacketUpdateSelectedBot -> protoBuf.encodeToByteArray(WsPacketUpdateSelectedBot.serializer(), this)
+        is WsPacketBotPlayerUpdateIsPlaying -> protoBuf.encodeToByteArray(WsPacketBotPlayerUpdateIsPlaying.serializer(), this)
+        is WsPacketUpdateSongInfo -> protoBuf.encodeToByteArray(WsPacketUpdateSongInfo.serializer(), this)
+        is WsPacketBotUpdateIsConnected -> protoBuf.encodeToByteArray(WsPacketBotUpdateIsConnected.serializer(), this)
+        is WsPacketUpdateBotInfo -> protoBuf.encodeToByteArray(WsPacketUpdateBotInfo.serializer(), this)
+        is WsPacketUpdateSongDurationPosition -> protoBuf.encodeToByteArray(WsPacketUpdateSongDurationPosition.serializer(), this)
+        is WsPacketBotPlayerStopTrack -> protoBuf.encodeToByteArray(serializer(), this)
     }
 
     private fun WsPacket.packetID() = when (this) {
@@ -98,8 +103,9 @@ object WsPacketSerializer {
         is WsPacketUpdateSongDurationPosition -> WsPacketID.PLAYER_UPDATE_SONG_DURATION
         is WsPacketBotPlayerStopTrack -> WsPacketID.PLAYER_STOP_TRACK
     }
-}
 
+
+}
 
 /* Ws Packets */
 @Serializable

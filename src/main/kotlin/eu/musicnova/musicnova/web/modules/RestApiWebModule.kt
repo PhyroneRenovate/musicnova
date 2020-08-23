@@ -29,7 +29,7 @@ class RestApiWebModule : WebModule {
             serveSwaggerUi = true
             swaggerUiPath = swaggerUIPath
         }
-        routing() {
+        routing {
             get(swaggerUIPath) {
                 call.respondRedirect("$swaggerUIPath/index.html?url=$openAPIJsonPath", true)
             }

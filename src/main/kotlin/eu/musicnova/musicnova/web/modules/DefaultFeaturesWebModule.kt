@@ -79,8 +79,8 @@ class DefaultFeaturesWebModule : WebModule {
 
     private object BotIdentifierSerializer : SessionSerializer<BotIdentifier> {
 
-        override fun deserialize(text: String): BotIdentifier = protoBuf.load(BotIdentifier.serializer(), Base64.getDecoder().decode(text))
+        override fun deserialize(text: String): BotIdentifier = protoBuf.decodeFromByteArray(BotIdentifier.serializer(), Base64.getDecoder().decode(text))
 
-        override fun serialize(session: BotIdentifier): String = Base64.getEncoder().encodeToString(protoBuf.dump(BotIdentifier.serializer(), session))
+        override fun serialize(session: BotIdentifier): String = Base64.getEncoder().encodeToString(protoBuf.encodeToByteArray(BotIdentifier.serializer(), session))
     }
 }
