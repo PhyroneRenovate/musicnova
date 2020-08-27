@@ -112,7 +112,7 @@ dependencies {
     implementation("com.tgirard12:graphql-kotlin-dsl:1.2.0") {
         exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
     }
-    implementation("com.github.papsign:Ktor-OpenAPI-Generator:0.2-beta.2-experimental")
+    implementation("com.github.papsign:Ktor-OpenAPI-Generator:0.2-beta.10")
 
     listOf(
             "ktor-server-netty",
