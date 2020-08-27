@@ -1,0 +1,8 @@
+{
+  "gradle-wrapper": {
+    "enabled": true
+  },
+  "npm": {
+    "baseDir": "/src/main/web"
+  }
+}
