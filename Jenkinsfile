@@ -23,7 +23,9 @@ pipeline {
 
         stage('Generate Docs') {
           steps {
-            sh 'gradle dokka'
+            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+              sh 'gradle dokka'
+            }
           }
         }
 
