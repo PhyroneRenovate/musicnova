@@ -5,7 +5,7 @@ import com.github.ksoichiro.build.info.BuildInfoExtension
 plugins {
     idea
     java
-    id("org.springframework.boot") version "2.3.3.RELEASE"
+    id("org.springframework.boot") version "2.3.1.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("com.github.node-gradle.node") version "2.2.4"
     id("org.jetbrains.dokka") version "0.10.1"
@@ -86,11 +86,11 @@ dependencies {
     testImplementation("org.springframework.batch:spring-batch-test")
 
 
-    implementation("info.picocli:picocli:4.5.1")
+    implementation("info.picocli:picocli:4.4.0")
     //kapt("info.picocli:picocli-codegen:4.4.0")
 
-    implementation("com.github.oshi:oshi-core:5.2.4")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.11.2")
+    implementation("com.github.oshi:oshi-core:5.2.0")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.11.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+")
     implementation("com.google.zxing:core:3.4.0")
     implementation("org.greenrobot:eventbus:3.2.0")
@@ -99,8 +99,8 @@ dependencies {
     implementation("me.tongfei:progressbar:0.8.1")
     implementation("com.sedmelluq:lavaplayer:1.3.50")
     implementation("com.github.theholywaffle:teamspeak3-api:1.2.0")
-    implementation("com.github.manevolent:ts3j:1.0.2")
-    implementation("net.dv8tion:JDA:4.2.0_198")
+    implementation("com.github.manevolent:ts3j:1.0.1")
+    implementation("net.dv8tion:JDA:4.2.0_178")
     implementation("com.github.Phyrone:brigardier-kotlin:1.3.3")
     implementation("com.zaxxer:HikariCP:3.4.5")
     implementation("org.xeustechnologies:jcl-core:2.8")
@@ -112,7 +112,7 @@ dependencies {
     implementation("com.tgirard12:graphql-kotlin-dsl:1.2.0") {
         exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
     }
-    implementation("com.github.papsign:Ktor-OpenAPI-Generator:0.2-beta.10")
+    implementation("com.github.papsign:Ktor-OpenAPI-Generator:0.2-beta.2-experimental")
 
     listOf(
             "ktor-server-netty",

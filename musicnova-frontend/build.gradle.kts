@@ -1,5 +1,6 @@
 plugins {
     id("org.jetbrains.kotlin.js")
+    idea
 }
 
 group = "eu.musicnova"
@@ -14,19 +15,37 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-js"))
     implementation(project(":musicnova-shared"))
-    implementation(npm("sweetalert2","9.17.1"))
-    implementation(npm("@vizuaalog/bulmajs","0.11.0"))
-    implementation(npm("@popperjs/core","2.4.4"))
+    implementation(npm("sweetalert2","9.17.1",false))
+    implementation(npm("@vizuaalog/bulmajs","0.11.0",true))
+    implementation(npm("cleave.js","1.6.0",false))
+    implementation(npm("@types/cleave.js","1.4.3",false))
     implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.9")
 }
+kotlin{
 
-kotlin.target {
-    browser {
-        webpackTask {
-            outputFileName = "musicnova.js"
+    js {
+        browser{
+            dceTask {
+                dceOptions {
+                    devMode = true
+                }
+            }
+            distribution {}
+            runTask {
+                cssSupport.enabled = true
+            }
+            webpackTask {
+                cssSupport.enabled = true
+                outputFileName = "musicnova.js"
+            }
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                    webpackConfig.cssSupport.enabled = true
+                }
+            }
         }
-
+        binaries.executable()
     }
 }
-

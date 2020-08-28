@@ -1,6 +1,7 @@
 package eu.musicnova.musicnova.config
 
 import com.uchuhimo.konf.ConfigSpec
+import com.uchuhimo.konf.Feature
 import eu.musicnova.musicnova.boot.MusicnovaApplicationCommandLine
 import eu.musicnova.musicnova.utils.ConfigWrapper
 import org.slf4j.LoggerFactory
@@ -16,6 +17,7 @@ class ConfigManager {
 
     @Bean
     fun config(appContext: ApplicationContext, @Named("main-config") configFile: File?,configSpecList: List<ConfigSpec>) = ConfigWrapper {
+        enable(Feature.WRITE_DESCRIPTIONS_AS_COMMENTS)
         configSpecList.forEach { spec ->
             addSpec(spec)
         }

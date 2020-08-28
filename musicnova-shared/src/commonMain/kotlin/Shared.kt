@@ -24,8 +24,7 @@ object SharedConst {
 
 @Suppress("EXPERIEMTAL")
 val protoBuf = ProtoBuf {
-    this.encodeDefaults = true
-
+    this.encodeDefaults = false
 }
 
 @Serializable
@@ -61,7 +60,7 @@ object WsPacketSerializer {
     @JvmOverloads
     fun serialize(packet: WsPacket): ByteArray {
         val packetID = packet.packetID()
-        val packetHeadBytes = protoBuf.encodeToByteArray(WsPacketHead.serializer(), WsPacketHead(packetID))
+        val packetHeadBytes = protoBuf.encodeToByteArray(WsPacketHead(packetID))
         val packetBodyBytes = packet.toBytes()
         return byteArrayOf(packetHeadBytes.size.toByte()) + packetHeadBytes + packetBodyBytes
     }
@@ -70,7 +69,7 @@ object WsPacketSerializer {
         val offset = bytes.offSet()
         val headBytes = bytes.copyOfRange(1, offset + 1)
         val bodyBytes = bytes.copyOfRange(offset + 1, bytes.size)
-        val head = protoBuf.decodeFromByteArray(WsPacketHead.serializer(), headBytes)
+        val head = protoBuf.decodeFromByteArray<WsPacketHead>(headBytes)
         val packetID = head.packetID
         return protoBuf.decodeFromByteArray(packetID.serializer, bodyBytes)
     }
@@ -228,6 +227,3 @@ enum class LoginStatus {
 enum class LoginStatusResponse {
     VALID, INVALID, BLOCKED
 }
-
-@Serializable
-class EmptyObject

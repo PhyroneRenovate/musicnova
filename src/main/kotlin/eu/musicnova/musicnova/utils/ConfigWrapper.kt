@@ -20,6 +20,7 @@ class ConfigWrapper(
         var config: Konf = Konf()
 ) : Konf {
     constructor(init: Config.() -> Unit) : this(Konf(init))
+
     override fun withLoadTrigger(
             description: String,
             trigger: (config: Config, load: (source: Source) -> Unit) -> Unit
@@ -120,7 +121,7 @@ class ConfigWrapper(
 
     override fun withPrefix(prefix: String) = config.withPrefix(prefix)
 
-    companion object Static{
+    companion object Static {
         private val fallbackFormat = ConfigFormat.HOCON
     }
 }
@@ -141,7 +142,7 @@ enum class ConfigFormat(private val handler: FormatHandler, private vararg val f
     fun save(config: Config, stream: OutputStream) = handler.save(config).toOutputStream(stream)
 
     @Throws(IOException::class)
-    fun load(config: Config ) = handler.load(config)
+    fun load(config: Config) = handler.load(config)
 
     @Throws(IOException::class)
     fun save(config: Config) = handler.save(config)
@@ -206,6 +207,7 @@ enum class ConfigFormat(private val handler: FormatHandler, private vararg val f
 
     private object VoidTreeNode : TreeNode {
         override val children: MutableMap<String, TreeNode> = mutableMapOf()
+        override var comments: String = ""
     }
 
     companion object {

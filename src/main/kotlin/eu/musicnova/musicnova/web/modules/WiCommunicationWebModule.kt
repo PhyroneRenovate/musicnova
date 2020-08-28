@@ -15,14 +15,15 @@ import io.ktor.http.ContentType
 import io.ktor.http.cio.websocket.*
 import io.ktor.request.receive
 import io.ktor.response.respondBytes
+import io.ktor.routing.*
 import io.ktor.routing.post
-import io.ktor.routing.routing
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToByteArray
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -60,13 +61,13 @@ class WiCommunicationWebModule : WebModule {
                 call.respondBytes(protoBuf.encodeToByteArray(PacketLoginResponse.serializer(), response), ContentType.Application.ProtoBuf)
             }
 
-            post(SharedConst.INTERNAL_SET_THEME_PATH) {
+            put(SharedConst.INTERNAL_SET_THEME_PATH) {
                 val request = protoBuf.decodeFromByteArray(ChangeThemeRequest.serializer(), call.receive())
                 call.sessions.set(request.newTheme)
-                call.respondBytes(protoBuf.encodeToByteArray(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
+                call.respondBytes(byteArrayOf(), ContentType.Application.ProtoBuf)
             }
 
-            post(SharedConst.INTERNAL_GET_BOTS_REQUEST) {
+            get(SharedConst.INTERNAL_GET_BOTS_REQUEST) {
 
                 val response = PacketBotsResponse(abotManager.all(true).map { bot ->
                     val subID = (bot as? ChildBot)?.childID
@@ -78,12 +79,12 @@ class WiCommunicationWebModule : WebModule {
                     )
                 })
 
-                call.respondBytes(protoBuf.encodeToByteArray(PacketBotsResponse.serializer(), response), ContentType.Application.ProtoBuf)
+                call.respondBytes(protoBuf.encodeToByteArray(response), ContentType.Application.ProtoBuf)
             }
 
-            post(SharedConst.INTERNAL_SET_SELECT_COOkIE) {
+            put(SharedConst.INTERNAL_SET_SELECT_COOkIE) {
                 call.sessions.set(protoBuf.decodeFromByteArray(BotIdentifier.serializer(), call.receive()))
-                call.respondBytes(protoBuf.encodeToByteArray(EmptyObject.serializer(), EmptyObject()), ContentType.Application.ProtoBuf)
+                call.respondBytes(byteArrayOf(), ContentType.Application.ProtoBuf)
             }
 
             post(SharedConst.SOCKET_PATH) {

@@ -5,7 +5,6 @@ import eu.musicnova.shared.*
 import kotlinx.browser.document
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.KSerializer
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.khronos.webgl.Uint8Array
@@ -17,6 +16,9 @@ import org.w3c.xhr.ARRAYBUFFER
 import org.w3c.xhr.XMLHttpRequest
 import org.w3c.xhr.XMLHttpRequestResponseType
 import kotlinx.browser.window
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -56,33 +58,76 @@ private fun loadPageStartData(): PageStartData {
     return protoBuf.decodeFromByteArray(PageStartData.serializer(), pageStartBytes.encodeToByteArray())
 }
 
-suspend inline fun <reified REQ, reified RES> postRequest(url: String, request: REQ, requestSerializer: KSerializer<REQ>, responseSerializer: KSerializer<RES>) = suspendCoroutine<RES> { lock ->
-    val httpRequest = XMLHttpRequest()
-    httpRequest.withCredentials = true
-    httpRequest.responseType = XMLHttpRequestResponseType.ARRAYBUFFER
-    httpRequest.onload = {
-        val buffer = httpRequest.response as? ArrayBuffer
+suspend inline fun <reified RES> getRequest(url: String) = suspendCoroutine<RES> { lock ->
+    val httpRequest = prepareHttpRequest()
+    httpRequest.continueOnResponse(lock)
+    httpRequest.open("GET", url)
+    httpRequest.send()
+}
+
+suspend inline fun <reified REQ, reified RES> postRequest(url: String, request: REQ) = suspendCoroutine<RES> { lock ->
+    val httpRequest = prepareHttpRequest()
+    httpRequest.continueOnResponse(lock)
+    httpRequest.open("POST", url)
+    val postBytes = try {
+        protoBuf.encodeToByteArray(request)
+    } catch (e: Throwable) {
+        console.error("Request encoding failed", e)
+        byteArrayOf()
+    }
+    httpRequest.send(postBytes)
+}
+
+suspend inline fun <reified REQ> putRequest(url: String, request: REQ) = suspendCoroutine<Unit> { lock ->
+    val httpRequest = prepareHttpRequest()
+    httpRequest.continueOnResponseWithoutContent(lock)
+    httpRequest.open("PUT", url)
+    httpRequest.send(protoBuf.encodeToByteArray(request))
+}
+
+ fun XMLHttpRequest.continueOnResponseWithoutContent(lock: Continuation<Unit>) {
+    onload = {
+        val buffer = response as? ArrayBuffer
+        runCatching {
+            if (buffer == null) {
+                lock.resumeWithException(IllegalStateException("wrong response"))
+            } else {
+                lock.resume(Unit)
+            }
+        }.getOrElse {
+            lock.resumeWithException(it)
+        }
+    }
+}
+
+inline fun <reified RES : Any> XMLHttpRequest.continueOnResponse(lock: Continuation<RES>) {
+    onload = {
+        val buffer = response as? ArrayBuffer
         runCatching {
             if (buffer == null) {
                 lock.resumeWithException(IllegalStateException("wrong response"))
             } else {
                 val bytes = Uint8Array(buffer).unsafeCast<ByteArray>()
-                lock.resume(protoBuf.decodeFromByteArray(responseSerializer, bytes))
+                lock.resume(protoBuf.decodeFromByteArray(bytes))
             }
         }.getOrElse {
             lock.resumeWithException(it)
         }
-
     }
-    httpRequest.open("POST", url)
+}
 
-    httpRequest.send(protoBuf.encodeToByteArray(requestSerializer, request))
+
+fun prepareHttpRequest(): XMLHttpRequest {
+    val httpRequest = XMLHttpRequest()
+    httpRequest.withCredentials = true
+    httpRequest.responseType = XMLHttpRequestResponseType.ARRAYBUFFER
+    return httpRequest
 }
 
 private val styleLink by lazy { document.getElementById(SharedConst.STYLE_LINK_ID) as HTMLLinkElement }
 fun setTheme(theme: WebTheme) {
     println("switch to theme ${theme.name} with url ${theme.fullPath}")
-    GlobalScope.launch { postRequest(SharedConst.INTERNAL_SET_THEME_PATH, ChangeThemeRequest(theme), ChangeThemeRequest.serializer(), EmptyObject.serializer()) }
+    GlobalScope.launch { putRequest(SharedConst.INTERNAL_SET_THEME_PATH, ChangeThemeRequest(theme)) }
     styleLink.href = theme.fullPath
 }
 

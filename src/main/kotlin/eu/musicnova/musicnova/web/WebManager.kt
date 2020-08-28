@@ -63,7 +63,7 @@ class WebManager {
 
 @Component
 class CoreWebConfig : ConfigSpec("web") {
-    val hosts by optional(listOf(WebHostAndPort("0.0.0.0", 8080)))
+    val hosts by optional(listOf(WebHostAndPort("0.0.0.0", 8080)),"hosts","addresses where the webserver should listen")
 }
 
 data class WebHostAndPort(val host: String, val port: Int)

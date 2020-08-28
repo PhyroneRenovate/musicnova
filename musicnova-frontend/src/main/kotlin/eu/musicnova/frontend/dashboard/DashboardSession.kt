@@ -21,12 +21,14 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+
 class DashboardSession {
     var socket: WebSocket? = null
 
     private val packetSendQueue = mutableListOf<WsPacket>()
 
     private fun sendQueuedPackets() {
+
         val iterator = packetSendQueue.iterator()
         while (iterator.hasNext()) {
             sendPacket(iterator.next())
@@ -166,19 +168,22 @@ class DashboardSession {
 
 
     private fun selectBot(identifier: BotIdentifier) {
-        GlobalScope.launch { postRequest(SharedConst.INTERNAL_SET_SELECT_COOkIE, identifier, BotIdentifier.serializer(), EmptyObject.serializer()) }
+        GlobalScope.launch { putRequest(SharedConst.INTERNAL_SET_SELECT_COOkIE, identifier) }
         sendPacket(WsPacketUpdateSelectedBot(identifier))
 
     }
 
-    fun openBotSelect() {
+    private fun openBotSelect() {
+
         Swal.fire {
             title = "Select Bot"
+
         }
         Swal.showLoading()
         GlobalScope.launch {
             try {
-                val response = postRequest(SharedConst.INTERNAL_GET_BOTS_REQUEST, EmptyObject(), EmptyObject.serializer(), PacketBotsResponse.serializer())
+
+                val response = getRequest<PacketBotsResponse>(SharedConst.INTERNAL_GET_BOTS_REQUEST)
                 Swal.hideLoading()
                 Swal.getContent().append {
                     div("swal-scrool-box") {
