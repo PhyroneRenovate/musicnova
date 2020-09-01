@@ -168,7 +168,13 @@ class DashboardSession {
 
 
     private fun selectBot(identifier: BotIdentifier) {
-        GlobalScope.launch { putRequest(SharedConst.INTERNAL_SET_SELECT_COOkIE, identifier) }
+        GlobalScope.launch {
+            putRequest(
+                SharedConst.INTERNAL_SET_SELECT_COOkIE,
+                identifier,
+                BotIdentifier.serializer()
+            )
+        }
         sendPacket(WsPacketUpdateSelectedBot(identifier))
 
     }
@@ -182,8 +188,7 @@ class DashboardSession {
         Swal.showLoading()
         GlobalScope.launch {
             try {
-
-                val response = getRequest<PacketBotsResponse>(SharedConst.INTERNAL_GET_BOTS_REQUEST)
+                val response = getRequest(SharedConst.INTERNAL_GET_BOTS_REQUEST, PacketBotsResponse.serializer())
                 Swal.hideLoading()
                 Swal.getContent().append {
                     div("swal-scrool-box") {
@@ -202,8 +207,14 @@ class DashboardSession {
                         }
                     }
                 }
-            } catch (e: Exception) {
-                Swal.fire("ERROR")
+            } catch (error: Throwable) {
+                console.error(error.stackTraceToString(),error)
+                Swal.hideLoading()
+                Swal.fire {
+                    title = "Get Bots Failed"
+                    icon = "error"
+                    text = error.stackTraceToString()
+                }
             }
 
         }
@@ -309,7 +320,13 @@ class DashboardSession {
                     onChangeFunction = {
                         volumeDurationSliderUpdateLock = false
                         val newDuration = playerDurationSlider.value.toLongOrNull()
-                        if (newDuration != null) GlobalScope.launch { sendPacket(WsPacketUpdateSongDurationPosition(newDuration)) }
+                        if (newDuration != null) GlobalScope.launch {
+                            sendPacket(
+                                WsPacketUpdateSongDurationPosition(
+                                    newDuration
+                                )
+                            )
+                        }
                     }
                     onInputFunction = {
                         volumeDurationSliderUpdateLock = true

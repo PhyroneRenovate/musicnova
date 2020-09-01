@@ -65,7 +65,8 @@ dependencies {
     implementation(project(":musicnova-shared"))
     //kapt("org.springframework.boot:spring-boot-configuration-processor")
     implementation("org.fusesource.jansi:jansi:1.18")
-    implementation(group = "com.uchuhimo", name = "konf", version = "0.22.1")
+    implementation("org.apache.commons:commons-text:1.9")
+    //implementation(group = "com.uchuhimo", name = "konf", version = "0.22.1")
     listOf(
             "konf-core",
             "konf-hocon",
@@ -73,7 +74,7 @@ dependencies {
             "konf-xml",
             "konf-yaml"
     ).forEach { name ->
-        //implementation("com.github.Cybermaxke.konf:$name:449becc276")
+        implementation("com.github.Cybermaxke.konf:$name:449becc276")
     }
 
 

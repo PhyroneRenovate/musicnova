@@ -65,9 +65,11 @@ fun buildLoginWindow() {
                     it.preventDefault()
                     GlobalScope.launch {
                         setLoginDisabled(true)
-                        val response = postRequest<PacketLoginRequest,PacketLoginResponse>(
-                                SharedConst.INTERNAL_LOGIN_PATH,
-                                PacketLoginRequest(emailField.value, passwordField.value)
+                        val response = postRequest<PacketLoginRequest, PacketLoginResponse>(
+                            SharedConst.INTERNAL_LOGIN_PATH,
+                            PacketLoginRequest(emailField.value, passwordField.value),
+                            PacketLoginRequest.serializer(),
+                            PacketLoginResponse.serializer()
                         )
                         setLoginDisabled(false)
                         when (response.status) {

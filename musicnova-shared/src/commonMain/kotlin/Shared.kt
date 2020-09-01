@@ -188,7 +188,7 @@ data class PacketLoginResponse(
 
 @Serializable
 data class PacketBotsResponse(
-        val bots: List<BotData> = listOf()
+        val bots: List<BotData>
 )
 
 
