@@ -66,6 +66,7 @@ dependencies {
     //kapt("org.springframework.boot:spring-boot-configuration-processor")
     implementation("org.fusesource.jansi:jansi:1.18")
     implementation("org.apache.commons:commons-text:1.9")
+    implementation("com.moandjiezana.toml:toml4j:0.7.1")
     //implementation(group = "com.uchuhimo", name = "konf", version = "0.22.1")
     listOf(
             "konf-core",
@@ -126,7 +127,7 @@ dependencies {
     }
 
     listOf("exposed-core", "exposed-dao", "exposed-jdbc", "exposed-jodatime", "exposed-java-time").forEach { name ->
-        implementation("org.jetbrains.exposed", name, "0.24.1")
+        implementation("org.jetbrains.exposed", name, "0.27.1")
     }
 
     //kapt("org.inferred:freebuilder:2.6.2")
@@ -207,10 +208,6 @@ tasks {
             attributes["Title"] = "Musicnova"
             attributes["Implementation-Version"] = project.version.toString()
         }
-    }
-    dokka {
-        outputFormat = "html"
-        outputDirectory = "$buildDir/javadoc"
     }
 }
 
