@@ -1,10 +1,12 @@
 package eu.musicnova.musicnova.web.modules
 
+import com.google.common.io.BaseEncoding
 import eu.musicnova.musicnova.bot.BotManager
 import eu.musicnova.musicnova.bot.ChildBot
 import eu.musicnova.musicnova.bot.MusicBot
-import eu.musicnova.musicnova.database.jpa.PersistentWebUserSessionData
+import eu.musicnova.musicnova.database.dao.PersistentWebUserSessionData
 import eu.musicnova.musicnova.module.WebModule
+import eu.musicnova.musicnova.utils.htmlContentType
 import eu.musicnova.musicnova.web.sesssions.SocketSessionManager
 import eu.musicnova.musicnova.web.auth.WebSessionAuthManager
 import eu.musicnova.musicnova.web.auth.WebUserLoginManager
@@ -23,7 +25,6 @@ import io.ktor.sessions.set
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToByteArray
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -48,7 +49,7 @@ class WiCommunicationWebModule : WebModule {
         routing {
             post(SharedConst.INTERNAL_LOGIN_PATH) {
                 val requestBytes = call.receive<ByteArray>()
-                val request = protoBuf.decodeFromByteArray(PacketLoginRequest.serializer(), requestBytes)
+                val request = InterPlatformSerializer.deserialize(PacketLoginRequest.serializer(), requestBytes)
                 val user = webUserAuthManager[request.username]
 
                 val response = if (user?.checkPassword(request.password) == true) {
@@ -58,13 +59,16 @@ class WiCommunicationWebModule : WebModule {
                     PacketLoginResponse(LoginStatusResponse.INVALID)
                 }
 
-                call.respondBytes(protoBuf.encodeToByteArray(PacketLoginResponse.serializer(), response), ContentType.Application.ProtoBuf)
+                call.respondBytes(
+                    InterPlatformSerializer.serialize(PacketLoginResponse.serializer(), response),
+                    InterPlatformSerializer.htmlContentType
+                )
             }
 
             put(SharedConst.INTERNAL_SET_THEME_PATH) {
-                val request = protoBuf.decodeFromByteArray(ChangeThemeRequest.serializer(), call.receive())
+                val request = InterPlatformSerializer.deserialize(ChangeThemeRequest.serializer(), call.receive())
                 call.sessions.set(request.newTheme)
-                call.respondBytes(byteArrayOf(), ContentType.Application.ProtoBuf)
+                call.respondBytes(byteArrayOf(), InterPlatformSerializer.htmlContentType)
             }
 
             get(SharedConst.INTERNAL_GET_BOTS_REQUEST) {
@@ -72,18 +76,27 @@ class WiCommunicationWebModule : WebModule {
                 val response = PacketBotsResponse(abotManager.all(true).map { bot ->
                     val subID = (bot as? ChildBot)?.childID
 
-                    BotData(BotIdentifierJVMExt.invoke(bot.uuid, subID), bot.name
+                    BotData(
+                        BotIdentifierJVMExt.invoke(bot.uuid, subID), bot.name
                             ?: ("${bot.uuid}" + if (subID != null) " - $subID" else ""),
-                            bot is ChildBot,
-                            bot is MusicBot
+                        bot is ChildBot,
+                        bot is MusicBot
                     )
                 })
+                val responseBytes = InterPlatformSerializer.serialize(
+                    PacketBotsResponse.serializer(), response
+                )
+                logger.debug(
+                    "respond bot request $response-> ${
+                        BaseEncoding.base64().encode(responseBytes)
+                    } (${responseBytes.size} bytes)"
+                )
 
-                call.respondBytes(protoBuf.encodeToByteArray(response), ContentType.Application.ProtoBuf)
+                call.respondBytes(responseBytes, InterPlatformSerializer.htmlContentType)
             }
 
             put(SharedConst.INTERNAL_SET_SELECT_COOkIE) {
-                call.sessions.set(protoBuf.decodeFromByteArray(BotIdentifier.serializer(), call.receive()))
+                call.sessions.set(InterPlatformSerializer.deserialize(BotIdentifier.serializer(), call.receive()))
                 call.respondBytes(byteArrayOf(), ContentType.Application.ProtoBuf)
             }
 
@@ -112,11 +125,13 @@ class WiCommunicationWebModule : WebModule {
     }
 
     inner class WebSocketCommunicationAdapter(
-            private val webSocket: DefaultWebSocketSession,
-            loginSession: PersistentWebUserSessionData,
-            selectedBot: BotIdentifier?
+        private val webSocket: DefaultWebSocketSession,
+        loginSession: PersistentWebUserSessionData,
+        selectedBot: BotIdentifier?
     ) : CommunicationAdapter {
-        private val session: SocketSessionManager.CommunicationSession = sessionManager.CommunicationSession(this, loginSession, selectedBot)
+        private val session: SocketSessionManager.CommunicationSession =
+            sessionManager.CommunicationSession(this, loginSession, selectedBot)
+
         override suspend fun start() {
             coroutineScope {
                 launch { webSocket.listener() }

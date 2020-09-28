@@ -26,7 +26,10 @@ class UserPageWebModule : WebModule {
     @Autowired
     lateinit var sessionAuthManager: WebSessionAuthManager
 
-    private val sendPageDebug = MusicnovaApplicationCommandLine.debug
+    @Autowired
+    lateinit var commandLine: MusicnovaApplicationCommandLine
+
+    private val sendPageDebug by lazy { commandLine.debug }
 
     suspend fun PipelineContext<Unit, ApplicationCall>.handlePage(dashboardPage: DashboardPage) {
         val session = with(sessionAuthManager) { getUserSession() }

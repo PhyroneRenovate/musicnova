@@ -5,6 +5,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException
 import de.phyrone.brig.wrapper.literal
 import de.phyrone.brig.wrapper.runs
 import eu.musicnova.musicnova.boot.MusicnovaApplicationCommandLine
+import eu.musicnova.musicnova.utils.Const
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import eu.musicnova.musicnova.utils.StringLineOutputStream
 import org.fusesource.jansi.AnsiConsole
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.boot.ApplicationRunner
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -32,56 +34,70 @@ import kotlin.system.exitProcess
 @Component
 class TerminalManager {
 
+    @Bean
+    @ConditionalOnProperty(
+        prefix = Const.MN_PROPERTY_PREFIX,
+        name = [Const.INTERACTIVE_PROPERTY],
+        havingValue = "true",
+        matchIfMissing = false
+    )
+    fun terminal(): Terminal {
+        logger.info("Init Terminal...")
+        val terminal = TerminalBuilder.builder()
+            .system(true)
+            .dumb(true)
+            .streams(FileInputStream(FileDescriptor.`in`), FileOutputStream(FileDescriptor.out))
+            .jansi(true)
+            .jna(true)
+            .encoding(Charsets.UTF_8)
+            .name("Musicnova")
+            .nativeSignals(true)
+            .build()
+        logger.debug("Terminal: $terminal")
+        return terminal
+    }
+
+    @Bean
+    @ConditionalOnBean(value = [Terminal::class])
+    fun lineReader(terminal: Terminal, completer: Completer, highlighter: Highlighter): LineReader {
+        logger.info("Init TerminalReader...")
+        val reader = LineReaderBuilder.builder()
+            .terminal(terminal)
+            .completer(completer)
+            .history(DefaultHistory())
+            .highlighter(highlighter)
+            .appName("Musicnova")
+            .build()
+        logger.debug("LineReader: $reader")
+        return reader
+    }
 
     private var terminalThread: Thread? = null
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     @Bean
+    @ConditionalOnBean(value = [Terminal::class, LineReader::class])
     fun startTerminal(
-            commandDispatcher: TerminalCommandDispatcher,
-            completer: Completer,
-            highlighter: Highlighter
+        commandDispatcher: TerminalCommandDispatcher,
+        lineReader: LineReader,
+        commandLine: MusicnovaApplicationCommandLine
     ) = ApplicationRunner {
-        if (MusicnovaApplicationCommandLine.interactive) {
-            val terminal = TerminalBuilder.builder()
-                    .system(true)
-                    .dumb(true)
-                    .streams(FileInputStream(FileDescriptor.`in`), FileOutputStream(FileDescriptor.out))
-                    .jansi(true)
-                    .jna(true)
-                    .encoding(Charsets.UTF_8)
-                    .name("Musicnova")
-                    .nativeSignals(true)
-                    .build()
-            this.terminal = terminal
-
-            val lineReader = LineReaderBuilder.builder()
-                    .terminal(terminal)
-                    .completer(completer)
-                    .history(DefaultHistory())
-                    .highlighter(highlighter)
-                    .appName("Musicnova")
-                    .build()
-
-            overrideSystemOut(lineReader)
-            terminalThread = thread(name = "TerminalReader") {
-                logger.debug("Terminal: $terminal")
-                logger.debug("LineReader: $lineReader")
-                logger.info("Starting Terminal...")
-                while (true) {
-                    try {
-                        val line = lineReader.readLine("musicnova> ").trimEnd()
-                        handleTerminalLine(line, commandDispatcher)
-                    } catch (e: UserInterruptException) {
-                        exitProcess(0)
-                    } catch (e: EndOfFileException) {
-                        exitProcess(0)
-                    } catch (e: CommandSyntaxException) {
-                        lineReader.printAbove(e.localizedMessage)
-                    } catch (e: Throwable) {
-                        e.printStackTrace()
-                    }
+        overrideSystemOut(lineReader)
+        terminalThread = thread(name = "TerminalReader") {
+            logger.info("Start Terminal...")
+            while (true) {
+                try {
+                    val line = lineReader.readLine("musicnova> ").trimEnd()
+                    handleTerminalLine(line, commandDispatcher)
+                } catch (e: UserInterruptException) {
+                    exitProcess(0)
+                } catch (e: EndOfFileException) {
+                    exitProcess(0)
+                } catch (e: CommandSyntaxException) {
+                    lineReader.printAbove(e.localizedMessage)
+                } catch (e: Throwable) {
+                    e.printStackTrace()
                 }
             }
         }
@@ -93,6 +109,7 @@ class TerminalManager {
     }
 
     private var sysOut: PrintStream? = null
+
     private fun overrideSystemOut(lineReader: LineReader) {
         sysOut = System.out
         System.setOut(PrintStream(StringLineOutputStream { line ->
@@ -101,15 +118,16 @@ class TerminalManager {
         }, true))
     }
 
-    private var terminal: Terminal? = null
+    @Autowired(required = false)
+    var terminal: Terminal? = null
 
     @PreDestroy
     private fun onTerminalStop() {
         val sOut = sysOut
         if (sOut != null) {
             System.setOut(sOut)
+            terminalThread?.interrupt()
         }
-        terminalThread?.interrupt()
         terminal?.close()
     }
 
@@ -130,8 +148,8 @@ class TerminalManager {
         }
         terminalCommandDispatcher.literal("help") {
             runs {
-                val usage = terminalCommandDispatcher.getSmartUsage(terminalCommandDispatcher.root, this)
-                usage.forEach { (_, line) ->
+                val usage = terminalCommandDispatcher.getAllUsage(terminalCommandDispatcher.root, this, false)
+                usage.forEach { line ->
                     println(line)
                 }
             }
@@ -163,18 +181,23 @@ class TerminalCompleter : Completer, Highlighter {
         if (latestWord != null) {
             runCatching {
                 val suggest = dispatcher.getCompletionSuggestions(parsed)
-                        .get().list.firstOrNull { it.text.startsWith(latestWord, true) }?.text
+                    .get().list.firstOrNull { it.text.startsWith(latestWord, true) }?.text
 
                 if (suggest != null) {
                     val partedSuggest = suggest.substring(latestWord.length)
                     val preWorlds = splited.subList(0, splited.size - 1).joinToString(" ")
 
                     return AttributedStringBuilder()
-                            .append(AttributedString(preWorlds, AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN)))
-                            .append(AttributedString(if (preWorlds.isEmpty()) "" else " "))
-                            .append(AttributedString(latestWord, AttributedStyle.DEFAULT.foreground(AttributedStyle.WHITE)))
-                            .append(AttributedString(partedSuggest, AttributedStyle.DEFAULT.foreground(AttributedStyle.CYAN)))
-                            .toAttributedString()
+                        .append(AttributedString(preWorlds, AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN)))
+                        .append(AttributedString(if (preWorlds.isEmpty()) "" else " "))
+                        .append(AttributedString(latestWord, AttributedStyle.DEFAULT.foreground(AttributedStyle.WHITE)))
+                        .append(
+                            AttributedString(
+                                partedSuggest,
+                                AttributedStyle.DEFAULT.foreground(AttributedStyle.CYAN)
+                            )
+                        )
+                        .toAttributedString()
                 }
             }
         }

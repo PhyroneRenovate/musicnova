@@ -23,10 +23,20 @@ import kotlin.coroutines.suspendCoroutine
 
 
 class DashboardSession {
+
+
     var socket: WebSocket? = null
-
     private val packetSendQueue = mutableListOf<WsPacket>()
-
+    private lateinit var playerVolumeSlider: HTMLInputElement
+    private lateinit var playerPlayPauseButton: HTMLButtonElement
+    private lateinit var playerStopButton: HTMLButtonElement
+    private lateinit var playerDurationSlider: HTMLInputElement
+    private lateinit var playerMaxTimeLabelSpan: HTMLSpanElement
+    private lateinit var playerCurrentTimeLabelSpan: HTMLSpanElement
+    private lateinit var playPauseIcon: HTMLElement
+    private lateinit var botConnectedSwitch: HTMLInputElement
+    private var volumeDurationSliderUpdateLock = false
+    private var volumeSliderUpdateLock = false
     private fun sendQueuedPackets() {
 
         val iterator = packetSendQueue.iterator()
@@ -116,7 +126,6 @@ class DashboardSession {
         }
     }
 
-
     private fun handlePlayerIsPlaying(packet: WsPacketBotPlayerUpdateIsPlaying) {
         val playing = packet.isPlaying
         if (playing != null) {
@@ -133,7 +142,6 @@ class DashboardSession {
         console.log("socked closed", event)
         window.location.reload()
     }
-
 
     fun handleIncommingVolumeUpdate(packet: WsPacketBotPlayerUpdateVolume) {
         if (!volumeSliderUpdateLock) playerVolumeSlider.value = packet.newVolume.toString()
@@ -166,13 +174,12 @@ class DashboardSession {
         }
     }
 
-
     private fun selectBot(identifier: BotIdentifier) {
         GlobalScope.launch {
             putRequest(
                 SharedConst.INTERNAL_SET_SELECT_COOkIE,
-                identifier,
-                BotIdentifier.serializer()
+                BotIdentifier.serializer(),
+                identifier
             )
         }
         sendPacket(WsPacketUpdateSelectedBot(identifier))
@@ -208,7 +215,7 @@ class DashboardSession {
                     }
                 }
             } catch (error: Throwable) {
-                console.error(error.stackTraceToString(),error)
+                console.error(error.stackTraceToString(), error)
                 Swal.hideLoading()
                 Swal.fire {
                     title = "Get Bots Failed"
@@ -227,18 +234,6 @@ class DashboardSession {
         playerPlayPauseButton.disabled = disabled
         playerStopButton.disabled = disabled
     }
-
-    private lateinit var playerVolumeSlider: HTMLInputElement
-    private lateinit var playerPlayPauseButton: HTMLButtonElement
-    private lateinit var playerStopButton: HTMLButtonElement
-    private lateinit var playerDurationSlider: HTMLInputElement
-    private lateinit var playerMaxTimeLabelSpan: HTMLSpanElement
-    private lateinit var playerCurrentTimeLabelSpan: HTMLSpanElement
-    private lateinit var playPauseIcon: HTMLElement
-    private lateinit var botConnectedSwitch: HTMLInputElement
-    private var volumeDurationSliderUpdateLock = false
-    private var volumeSliderUpdateLock = false
-
 
     private fun TagConsumer<HTMLElement>.appendTopMenu() {
         nav(classes = "navbar is-primary") {
@@ -342,7 +337,6 @@ class DashboardSession {
         }
     }
 
-
     private fun buildPage() {
         newBody().append {
             div("sticky-top") {
@@ -351,8 +345,10 @@ class DashboardSession {
             }
             div("container is-fluid") {
                 div("page-content") {
+
                     repeat(1000) {
                         p { +"$it" }
+
                     }
                 }
             }
@@ -363,7 +359,6 @@ class DashboardSession {
         }
 
     }
-
 
     suspend fun start() {
         buildPage()

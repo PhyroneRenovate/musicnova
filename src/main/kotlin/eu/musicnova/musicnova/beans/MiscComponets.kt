@@ -2,52 +2,55 @@ package eu.musicnova.musicnova.beans
 
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import eu.musicnova.musicnova.beans.present.InitCommandLineBeanPresent
+import eu.musicnova.musicnova.utils.Const
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
-import org.jline.reader.Completer
-import org.jline.reader.Highlighter
-import org.jline.reader.LineReader
-import org.jline.reader.LineReaderBuilder
-import org.jline.reader.impl.history.DefaultHistory
-import org.jline.terminal.Terminal
-import org.jline.terminal.TerminalBuilder
+import io.sentry.Sentry
+import io.sentry.SentryClient
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
-import java.io.FileDescriptor
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import java.io.File
+import javax.annotation.PreDestroy
 
 @Component
 class MiscComponets {
-    @Bean fun terminalCommandDispatcher() = TerminalCommandDispatcher()
+    @Bean
+    fun terminalCommandDispatcher() = TerminalCommandDispatcher()
 
     @Bean
     fun lavaPlayer() = DefaultAudioPlayerManager().also { defaultAudioPlayerManager ->
         AudioSourceManagers.registerRemoteSources(defaultAudioPlayerManager)
     }
 
-    /*
     @Bean
-    fun terminal(): Terminal = TerminalBuilder.builder()
-            .system(true)
-            .dumb(true)
-            .streams(FileInputStream(FileDescriptor.`in`), FileOutputStream(FileDescriptor.out))
-            .jansi(true)
-            .jna(true)
-            .encoding(Charsets.UTF_8)
-            .name("Musicnova")
-            .nativeSignals(true)
-            .build()
+    @Suppress("SpringJavaAutowiringInspection", "SpringJavaInjectionPointsAutowiringInspection")
+    fun commandLine(@Qualifier(Const.BEAN_NAME_CLI_PRESENT) present: InitCommandLineBeanPresent) = present.get()
 
     @Bean
-    fun lineReader(terminal: Terminal, completer: Completer, highlighter: Highlighter): LineReader = LineReaderBuilder.builder()
-            .terminal(terminal)
-            .completer(completer)
-            .history(DefaultHistory())
-            .highlighter(highlighter)
-            .appName("Musicnova")
-            .build()
-    */
+    @Qualifier(Const.BEAN_DATA_FOLDER)
+    fun dataFolder() = File("data")
+
+    @Bean
+    @Qualifier(Const.BEAN_TEMP_FOLDER)
+    fun tempFolder(@Qualifier(Const.BEAN_DATA_FOLDER) dataFolder: File) =
+        File(dataFolder, "temp").apply { deleteRecursively();mkdirs() }
+
+    @Bean
+    @Qualifier(Const.BEAN_AUDIO_TRACK_FOLDER)
+    fun audioTrackFolder(@Qualifier(Const.BEAN_DATA_FOLDER) dataFolder: File) = File(dataFolder, "audio")
+
 
     //TODO("implement sentry (+ disable option)")
-    //@Bean fun senry():SentryClient = Sentry.init("https://4c3668b7a6b34a1da4feddb0755744e2@sentry.phyrone.de/8")
+    //@Bean fun senry(): SentryClient = Sentry.init("https://4c3668b7a6b34a1da4feddb0755744e2@sentry.phyrone.de/8")
+
+    @Autowired
+    @Qualifier(Const.BEAN_TEMP_FOLDER)
+    lateinit var tempFolder:File
+
+    @PreDestroy
+    fun onMiscDestroy(){
+        tempFolder.deleteRecursively()
+    }
 }

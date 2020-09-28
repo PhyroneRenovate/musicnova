@@ -1,4 +1,5 @@
-package eu.musicnova.musicnova.database.jpa
+@file:Suppress("")
+package eu.musicnova.musicnova.database.dao
 
 import com.github.manevolent.ts3j.identity.LocalIdentity
 import com.github.manevolent.ts3j.util.Ts3Crypt
@@ -177,10 +178,10 @@ data class PersistentWebUserData(
 @Table(name = "web_user_session")
 @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 data class PersistentWebUserSessionData(
-        @Column(length = 512) @Id val sessionToken: String,
-        @ManyToOne var webUser: PersistentWebUserData,
-        var lastSeenDate: LocalDateTime,
-        var loginDate: LocalDateTime
+    @Column(length = 512) @Id val sessionToken: String,
+    @ManyToOne var webUser: PersistentWebUserData,
+    var lastSeenDate: LocalDateTime,
+    var loginDate: LocalDateTime
 )
 
 @Entity

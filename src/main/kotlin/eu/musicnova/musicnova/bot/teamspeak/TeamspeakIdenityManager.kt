@@ -1,15 +1,14 @@
 package eu.musicnova.musicnova.bot.teamspeak
 
 import com.github.manevolent.ts3j.identity.LocalIdentity
-import com.github.manevolent.ts3j.util.Ts3Crypt
 import com.google.common.cache.CacheBuilder
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.context.CommandContext
 import de.phyrone.brig.wrapper.*
 import de.vandermeer.asciitable.AsciiTable
 import eu.musicnova.musicnova.bot.TerminalConfigurable
-import eu.musicnova.musicnova.database.jpa.PersistentTeamspeakIdentity
-import eu.musicnova.musicnova.database.jpa.TeamspeakIdentiyDatabase
+import eu.musicnova.musicnova.database.dao.PersistentTeamspeakIdentity
+import eu.musicnova.musicnova.database.dao.TeamspeakIdentiyDatabase
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import me.tongfei.progressbar.ProgressBar
 import me.tongfei.progressbar.ProgressBarStyle

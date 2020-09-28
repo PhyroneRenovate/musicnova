@@ -2,20 +2,24 @@ package eu.musicnova.musicnova.audio
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
-import com.sedmelluq.discord.lavaplayer.player.event.*
+import com.sedmelluq.discord.lavaplayer.player.event.AudioEvent
+import com.sedmelluq.discord.lavaplayer.player.event.AudioEventListener
+import com.sedmelluq.discord.lavaplayer.player.event.TrackEndEvent
+import com.sedmelluq.discord.lavaplayer.player.event.TrackStartEvent
 import com.sedmelluq.discord.lavaplayer.source.local.LocalAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioReference
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import eu.musicnova.musicnova.bot.BotEventListener
 import eu.musicnova.musicnova.bot.BotPlayerEventListner
-import eu.musicnova.musicnova.database.jpa.*
+import eu.musicnova.musicnova.database.dao.*
+import eu.musicnova.musicnova.utils.Const
 import eu.musicnova.musicnova.utils.asnycIOTask
 import eu.musicnova.musicnova.utils.loadItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import java.io.File
 import java.util.*
@@ -31,8 +35,9 @@ class MusicNovaAudioProvider {
     @Autowired
     lateinit var audioControllerDatabase: AudioContollerDatabase
 
-    private val localTrackFolder = File("data/audio")
-    init { localTrackFolder.mkdirs() }
+    @Autowired
+    @Qualifier(Const.BEAN_AUDIO_TRACK_FOLDER)
+    lateinit var localTrackFolder :File
 
     private val localAudioSource = LocalAudioSourceManager()
 
@@ -45,9 +50,9 @@ class MusicNovaAudioProvider {
     private inline fun getOrCreate(dao: PersistentAudioControllerData, listener: BotPlayerEventListner): LavaPlayerAudioController = ProvidedAudioControllerImpl(dao, listener)
 
     private inner class ProvidedAudioControllerImpl(
-            private val data: PersistentAudioControllerData,
-            private val listener: BotPlayerEventListner,
-            override val lavaPlayer: AudioPlayer = playerManager.createPlayer()
+        private val data: PersistentAudioControllerData,
+        private val listener: BotPlayerEventListner,
+        override val lavaPlayer: AudioPlayer = playerManager.createPlayer()
     ) : LavaPlayerAudioController, AudioPlayer by lavaPlayer, AudioEventListener {
 
 

@@ -2,8 +2,8 @@ package eu.musicnova.musicnova.web.modules
 
 import eu.musicnova.musicnova.module.WebModule
 import eu.musicnova.shared.BotIdentifier
+import eu.musicnova.shared.InterPlatformSerializer
 import eu.musicnova.shared.WebTheme
-import eu.musicnova.shared.protoBuf
 import io.ktor.application.Application
 import io.ktor.application.install
 import io.ktor.auth.Authentication
@@ -69,7 +69,7 @@ class DefaultFeaturesWebModule : WebModule {
         }
     }
 
-    /* using ordinals is much smaller  */
+    /* using just ordinals of enums instant of there full names is much smaller  */
     private object ThemeOrdinalSerializer : SessionSerializer<WebTheme> {
 
         override fun deserialize(text: String): WebTheme = WebTheme.values()[text.toInt()]
@@ -79,8 +79,8 @@ class DefaultFeaturesWebModule : WebModule {
 
     private object BotIdentifierSerializer : SessionSerializer<BotIdentifier> {
 
-        override fun deserialize(text: String): BotIdentifier = protoBuf.decodeFromByteArray(BotIdentifier.serializer(), Base64.getDecoder().decode(text))
+        override fun deserialize(text: String): BotIdentifier = InterPlatformSerializer.deserialize(BotIdentifier.serializer(), Base64.getDecoder().decode(text))
 
-        override fun serialize(session: BotIdentifier): String = Base64.getEncoder().encodeToString(protoBuf.encodeToByteArray(BotIdentifier.serializer(), session))
+        override fun serialize(session: BotIdentifier): String = Base64.getEncoder().encodeToString(InterPlatformSerializer.serialize(BotIdentifier.serializer(), session))
     }
 }

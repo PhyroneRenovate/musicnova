@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 import java.util.*
 
 @Component
-class GraphQLComponent {
+class GraphQLBeans {
 
     @Bean
     fun graphQLSchemaDSL() = schemaDsl {

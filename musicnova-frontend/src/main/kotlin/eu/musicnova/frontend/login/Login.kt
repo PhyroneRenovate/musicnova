@@ -67,9 +67,10 @@ fun buildLoginWindow() {
                         setLoginDisabled(true)
                         val response = postRequest<PacketLoginRequest, PacketLoginResponse>(
                             SharedConst.INTERNAL_LOGIN_PATH,
-                            PacketLoginRequest(emailField.value, passwordField.value),
+
                             PacketLoginRequest.serializer(),
-                            PacketLoginResponse.serializer()
+                            PacketLoginResponse.serializer(),
+                                    PacketLoginRequest(emailField.value, passwordField.value),
                         )
                         setLoginDisabled(false)
                         when (response.status) {

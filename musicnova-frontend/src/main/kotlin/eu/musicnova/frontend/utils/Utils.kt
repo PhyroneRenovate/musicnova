@@ -17,9 +17,6 @@ import org.w3c.xhr.XMLHttpRequest
 import org.w3c.xhr.XMLHttpRequestResponseType
 import kotlinx.browser.window
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.decodeFromByteArray
-import kotlinx.serialization.encodeToByteArray
-import kotlinx.serialization.json.JsonEncoder
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -53,44 +50,50 @@ inline fun newBody() = (document.body?.also { it.innerHTML = "" }
     ?: document.createElement("body").also { document.body = it.unsafeCast<HTMLElement>() })
 
 val pageStartData by lazy { loadPageStartData() }
+val debug by lazy { pageStartData.debug }
 
 private fun loadPageStartData(): PageStartData {
     val pageStartBaseString = window[SharedConst.START_DATA_FIELD] as String
-    val pageStartBytes = window.atob(pageStartBaseString)
-    return protoBuf.decodeFromByteArray(PageStartData.serializer(), pageStartBytes.encodeToByteArray())
+    val pageStartBytes = window.atob(pageStartBaseString).encodeToByteArray()
+    return PageStartData.fromBytes(pageStartBytes)
 }
 
-suspend fun <RES> getRequest(url: String, responseSerializer: KSerializer<RES>) = suspendCoroutine<RES> { lock ->
+suspend fun <RESPONSE> getRequest(url: String, kSerializer: KSerializer<RESPONSE>) = InterPlatformSerializer.deserialize(
+    kSerializer,
+    getRequest(url)
+)
+
+suspend fun getRequest(url: String) = suspendCoroutine<ByteArray> { lock ->
     val httpRequest = prepareHttpRequest()
-    httpRequest.continueOnResponse(lock, responseSerializer)
+    httpRequest.continueOnResponse(lock)
     httpRequest.open("GET", url)
     httpRequest.send()
 }
-
-suspend fun <REQ, RES> postRequest(
+suspend fun <REQUEST,RESPONSE>postRequest(
     url: String,
-    request: REQ,
-    requestSerializer: KSerializer<REQ>,
-    responseSerializer: KSerializer<RES>
-) = suspendCoroutine<RES> { lock ->
+    requestSerializer:KSerializer<REQUEST>,
+    responseSerializer:KSerializer<RESPONSE>,
+    request: REQUEST
+) =InterPlatformSerializer.deserialize(responseSerializer, postRequest(url,InterPlatformSerializer.serialize(requestSerializer,request)))
+suspend fun postRequest(
+    url: String,
+    request: ByteArray
+) = suspendCoroutine<ByteArray> { lock ->
     val httpRequest = prepareHttpRequest()
-    httpRequest.continueOnResponse(lock, responseSerializer)
+    httpRequest.continueOnResponse(lock)
     httpRequest.open("POST", url)
-    val postBytes = try {
-        protoBuf.encodeToByteArray(requestSerializer, request)
-    } catch (e: Throwable) {
-        console.error("Request encoding failed", e)
-        byteArrayOf()
-    }
-    httpRequest.send(postBytes)
+    httpRequest.send(request)
 }
 
-suspend fun <REQ> putRequest(url: String, request: REQ, requestSerializer: KSerializer<REQ>) =
+suspend fun <REQEST> putRequest(url: String, kSerializer: KSerializer<REQEST>, request: REQEST) =
+    putRequest(url, InterPlatformSerializer.serialize(kSerializer, request))
+
+suspend fun putRequest(url: String, request: ByteArray) =
     suspendCoroutine<Unit> { lock ->
         val httpRequest = prepareHttpRequest()
         httpRequest.continueOnResponseWithoutContent(lock)
         httpRequest.open("PUT", url)
-        httpRequest.send(protoBuf.encodeToByteArray(requestSerializer, request))
+        httpRequest.send(request)
     }
 
 fun XMLHttpRequest.continueOnResponseWithoutContent(lock: Continuation<Unit>) {
@@ -100,6 +103,9 @@ fun XMLHttpRequest.continueOnResponseWithoutContent(lock: Continuation<Unit>) {
             if (buffer == null) {
                 lock.resumeWithException(IllegalStateException("wrong response"))
             } else {
+                if (debug) {
+                    console.info(this, "got expected empty response")
+                }
                 lock.resume(Unit)
             }
         }.getOrElse {
@@ -108,7 +114,7 @@ fun XMLHttpRequest.continueOnResponseWithoutContent(lock: Continuation<Unit>) {
     }
 }
 
-private fun <RES> XMLHttpRequest.continueOnResponse(lock: Continuation<RES>, ser: KSerializer<RES>) {
+fun XMLHttpRequest.continueOnResponse(lock: Continuation<ByteArray>) {
     onload = {
         val buffer = response as? ArrayBuffer
         runCatching {
@@ -116,7 +122,15 @@ private fun <RES> XMLHttpRequest.continueOnResponse(lock: Continuation<RES>, ser
                 lock.resumeWithException(IllegalStateException("wrong response"))
             } else {
                 val bytes = Uint8Array(buffer).unsafeCast<ByteArray>()
-                lock.resume(protoBuf.decodeFromByteArray(ser, bytes))
+                if (debug) {
+                    console.info(
+                        this,
+                        "recieved packet bytes deconding now... (lenght: ${bytes.size}bytes)",
+                        bytes,
+                        window.btoa(bytes.unsafeCast<String>())
+                    )
+                }
+                lock.resume(bytes)
             }
         }.getOrElse {
             lock.resumeWithException(it)
@@ -125,7 +139,7 @@ private fun <RES> XMLHttpRequest.continueOnResponse(lock: Continuation<RES>, ser
 }
 
 
-private fun prepareHttpRequest(): XMLHttpRequest {
+fun prepareHttpRequest(): XMLHttpRequest {
     val httpRequest = XMLHttpRequest()
     httpRequest.withCredentials = true
     httpRequest.responseType = XMLHttpRequestResponseType.ARRAYBUFFER
@@ -138,8 +152,8 @@ fun setTheme(theme: WebTheme) {
     GlobalScope.launch {
         putRequest(
             SharedConst.INTERNAL_SET_THEME_PATH,
-            ChangeThemeRequest(theme),
-            ChangeThemeRequest.serializer()
+            ChangeThemeRequest.serializer(),
+            ChangeThemeRequest(theme)
         )
     }
     styleLink.href = theme.fullPath

@@ -7,8 +7,8 @@ import de.phyrone.brig.wrapper.getArgument
 import de.phyrone.brig.wrapper.literal
 import de.phyrone.brig.wrapper.runs
 import de.vandermeer.asciitable.AsciiTable
-import eu.musicnova.musicnova.database.jpa.PersistentWebUserData
-import eu.musicnova.musicnova.database.jpa.WebUserDatabase
+import eu.musicnova.musicnova.database.dao.PersistentWebUserData
+import eu.musicnova.musicnova.database.dao.WebUserDatabase
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import org.apache.commons.lang3.RandomStringUtils
 import org.springframework.beans.factory.annotation.Autowired

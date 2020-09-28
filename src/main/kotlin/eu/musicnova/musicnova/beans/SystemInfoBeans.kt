@@ -7,13 +7,13 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
 import oshi.SystemInfo
+import oshi.software.os.OSProcess
 import oshi.software.os.OperatingSystem
-import javax.inject.Named
 
 @Component
-class SystemInfoComponent {
+class SystemInfoBeans {
 
-    private val logger = LoggerFactory.getLogger(SystemInfoComponent::class.java)
+    private val logger = LoggerFactory.getLogger(SystemInfoBeans::class.java)
 
     @Bean
     fun oshiSystemInfo(): SystemInfo {
@@ -22,7 +22,10 @@ class SystemInfoComponent {
     }
 
     @Bean
-    fun oshiOperatingSystemInfo(systemInfo: SystemInfo): OperatingSystem = systemInfo.operatingSystem
+    fun operatingSystemInfo(systemInfo: SystemInfo): OperatingSystem = systemInfo.operatingSystem
+
+    @Bean
+    fun processInfo(operatingSystem: OperatingSystem):OSProcess = operatingSystem.getProcess(operatingSystem.processId)
 
     @Bean
     @Qualifier(BEAN_IS_BOOT_JAR)

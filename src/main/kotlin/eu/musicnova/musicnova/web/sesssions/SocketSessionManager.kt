@@ -2,7 +2,7 @@ package eu.musicnova.musicnova.web.sesssions
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import eu.musicnova.musicnova.bot.*
-import eu.musicnova.musicnova.database.jpa.PersistentWebUserSessionData
+import eu.musicnova.musicnova.database.dao.PersistentWebUserSessionData
 import eu.musicnova.musicnova.utils.serializableIdentifier
 import eu.musicnova.musicnova.web.modules.WiCommunicationWebModule
 import eu.musicnova.shared.*
@@ -23,9 +23,9 @@ class SocketSessionManager {
     lateinit var botManager: BotManager
 
     inner class CommunicationSession(
-            private val adapter: WiCommunicationWebModule.CommunicationAdapter,
-            private val session: PersistentWebUserSessionData,
-            selectBot: BotIdentifier?
+        private val adapter: WiCommunicationWebModule.CommunicationAdapter,
+        private val session: PersistentWebUserSessionData,
+        selectBot: BotIdentifier?
     ) {
         private var currentBot: Bot? = selectBot?.toBot()
             set(value) {

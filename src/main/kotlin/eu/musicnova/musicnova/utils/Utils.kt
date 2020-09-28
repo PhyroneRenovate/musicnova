@@ -12,6 +12,8 @@ import eu.musicnova.musicnova.bot.Bot
 import eu.musicnova.musicnova.bot.BotEventListener
 import eu.musicnova.musicnova.bot.ChildBot
 import eu.musicnova.shared.BotIdentifierJVMExt
+import eu.musicnova.shared.InterPlatformSerializer
+import io.ktor.http.*
 import kotlinx.coroutines.*
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.support.JpaEntityInformation
@@ -33,7 +35,8 @@ inline fun <reified T> asnycIOTask(noinline block: () -> T) {
     CoroutineScope(Dispatchers.IO).async { block.invoke() }
 }
 
-inline fun <reified T> asnycIODeferedTask(noinline block: () -> T) = CoroutineScope(Dispatchers.IO).async { block.invoke() }
+inline fun <reified T> asnycIODeferedTask(noinline block: () -> T) =
+    CoroutineScope(Dispatchers.IO).async { block.invoke() }
 
 
 inline fun <reified T> Optional<T>.getOrNull(): T? = orElseGet { null }
@@ -112,9 +115,9 @@ interface MnRepository<T, ID> : JpaRepository<T, ID> {
 
 
 class MnRepositoryImpl<T, ID : Serializable>(
-        @Suppress("SpringJavaInjectionPointsAutowiringInspection")
-        entityInformation: JpaEntityInformation<T, ID>,
-        val entityManager: EntityManager
+    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
+    entityInformation: JpaEntityInformation<T, ID>,
+    val entityManager: EntityManager
 ) : SimpleJpaRepository<T, ID>(entityInformation, entityManager), MnRepository<T, ID> {
     @Transactional
     override fun refresh(entity: T) {
@@ -136,7 +139,7 @@ class StringLineOutputStream(private val block: (String) -> Unit) : ByteArrayOut
     }
 
     private fun handleLines() {
-        val lines = lineCache.split("\n", System.lineSeparator())
+        val lines = lineCache.split(System.lineSeparator(), "\n")
         if (lines.size > 1) {
             lines.subList(0, lines.size - 1).forEach {
                 block.invoke(it)
@@ -149,4 +152,7 @@ class StringLineOutputStream(private val block: (String) -> Unit) : ByteArrayOut
 
 inline fun <reified T> Any?.cast(): T? = this as? T
 
- fun Bot.serializableIdentifier() = BotIdentifierJVMExt(this.uuid, this.cast<ChildBot>()?.childID)
+fun Bot.serializableIdentifier() = BotIdentifierJVMExt(this.uuid, this.cast<ChildBot>()?.childID)
+
+val InterPlatformSerializer.htmlContentType: ContentType
+    get() = ContentType.Application.Json

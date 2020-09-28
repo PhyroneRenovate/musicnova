@@ -9,7 +9,7 @@ group = "eu.musicnova"
 repositories {
     mavenCentral()
 }
-val ser_version = "1.0.0-RC"
+val ser_version = "1.0.0-RC2"
 kotlin {
     /* Targets configuration omitted. 
     *  To find out how to configure the targets, please follow the link:
@@ -20,6 +20,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:$ser_version")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-json:$ser_version")
                 api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$ser_version")
             }
         }

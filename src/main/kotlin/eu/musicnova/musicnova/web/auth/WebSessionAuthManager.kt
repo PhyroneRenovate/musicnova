@@ -2,11 +2,10 @@ package eu.musicnova.musicnova.web.auth
 
 import com.uchuhimo.konf.ConfigSpec
 import de.phyrone.brig.wrapper.literal
-import de.phyrone.brig.wrapper.runs
-import eu.musicnova.musicnova.database.jpa.PersistentWebUserData
-import eu.musicnova.musicnova.database.jpa.PersistentWebUserSessionData
-import eu.musicnova.musicnova.database.jpa.WebUserDatabase
-import eu.musicnova.musicnova.database.jpa.WebUserSessionDatabase
+import eu.musicnova.musicnova.database.dao.PersistentWebUserData
+import eu.musicnova.musicnova.database.dao.PersistentWebUserSessionData
+import eu.musicnova.musicnova.database.dao.WebUserDatabase
+import eu.musicnova.musicnova.database.dao.WebUserSessionDatabase
 import eu.musicnova.musicnova.utils.Konf
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import eu.musicnova.musicnova.utils.getOrNull

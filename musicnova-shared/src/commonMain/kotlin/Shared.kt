@@ -1,7 +1,14 @@
+@file:JvmName("InterPlatformShared")
+
 package eu.musicnova.shared
 
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
+import kotlinx.serialization.protobuf.ProtoNumber
+import kotlinx.serialization.protobuf.ProtoType
+import kotlin.js.JsName
+import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 
 
@@ -22,18 +29,21 @@ object SharedConst {
     const val STYLE_LINK_ID = "style-link"
 }
 
-@Suppress("EXPERIEMTAL")
-val protoBuf = ProtoBuf {
-    this.encodeDefaults = false
-}
-
 @Serializable
 data class PageStartData(
-        val loginStatus: LoginStatus,
-        val dashboardPage: DashboardPage,
-        val theme: WebTheme,
-        val debug: Boolean = false
-)
+    val loginStatus: LoginStatus,
+    val dashboardPage: DashboardPage,
+    val theme: WebTheme,
+    val debug: Boolean = false
+) {
+
+    fun toBytes() = protoBuf.encodeToByteArray(serializer(), this)
+
+    companion object Static {
+        private val protoBuf = ProtoBuf { encodeDefaults = false }
+        fun fromBytes(bytes: ByteArray) = protoBuf.decodeFromByteArray(serializer(), bytes)
+    }
+}
 
 @Serializable
 enum class WsPacketID(val serializer: KSerializer<out WsPacket>) {
@@ -52,10 +62,14 @@ enum class WsPacketID(val serializer: KSerializer<out WsPacket>) {
 
 @Serializable
 data class WsPacketHead(
-        val packetID: WsPacketID
+    val packetID: WsPacketID
 )
 
 object WsPacketSerializer {
+
+    private val protoBuf = ProtoBuf {
+        this.encodeDefaults = false
+    }
 
     @JvmOverloads
     fun serialize(packet: WsPacket): ByteArray {
@@ -78,15 +92,21 @@ object WsPacketSerializer {
     private inline fun ByteArray.offSet() = first().toInt()
 
     private fun WsPacket.toBytes() = when (this) {
-        is WsPacketClose -> protoBuf.encodeToByteArray(WsPacketClose.serializer(), this)
+        is WsPacketClose -> protoBuf.encodeToByteArray(this)
         is WsPacketBotPlayerUpdateVolume -> protoBuf.encodeToByteArray(WsPacketBotPlayerUpdateVolume.serializer(), this)
         is WsPacketBotPlayerPlayStream -> protoBuf.encodeToByteArray(WsPacketBotPlayerPlayStream.serializer(), this)
         is WsPacketUpdateSelectedBot -> protoBuf.encodeToByteArray(WsPacketUpdateSelectedBot.serializer(), this)
-        is WsPacketBotPlayerUpdateIsPlaying -> protoBuf.encodeToByteArray(WsPacketBotPlayerUpdateIsPlaying.serializer(), this)
+        is WsPacketBotPlayerUpdateIsPlaying -> protoBuf.encodeToByteArray(
+            WsPacketBotPlayerUpdateIsPlaying.serializer(),
+            this
+        )
         is WsPacketUpdateSongInfo -> protoBuf.encodeToByteArray(WsPacketUpdateSongInfo.serializer(), this)
         is WsPacketBotUpdateIsConnected -> protoBuf.encodeToByteArray(WsPacketBotUpdateIsConnected.serializer(), this)
         is WsPacketUpdateBotInfo -> protoBuf.encodeToByteArray(WsPacketUpdateBotInfo.serializer(), this)
-        is WsPacketUpdateSongDurationPosition -> protoBuf.encodeToByteArray(WsPacketUpdateSongDurationPosition.serializer(), this)
+        is WsPacketUpdateSongDurationPosition -> protoBuf.encodeToByteArray(
+            WsPacketUpdateSongDurationPosition.serializer(),
+            this
+        )
         is WsPacketBotPlayerStopTrack -> protoBuf.encodeToByteArray(serializer(), this)
     }
 
@@ -112,7 +132,7 @@ sealed class WsPacket
 
 @Serializable
 data class WsPacketClose(
-        val reason: Reason
+    val reason: Reason
 ) : WsPacket() {
     enum class Reason {
         LOGOUT, BLOCKED, GONE_AWAY, ERROR
@@ -121,46 +141,46 @@ data class WsPacketClose(
 
 @Serializable
 data class WsPacketUpdateSelectedBot(
-        val botIdentifier: BotIdentifier?
+    val botIdentifier: BotIdentifier?
 ) : WsPacket()
 
 @Serializable
 data class WsPacketBotUpdateIsConnected(
-        val isConnected: Boolean
+    val isConnected: Boolean
 ) : WsPacket()
 
 @Serializable
 data class WsPacketBotPlayerPlayStream(
-        val url: String
+    val url: String
 ) : WsPacket()
 
 @Serializable
 data class WsPacketBotPlayerUpdateVolume(
-        val newVolume: Int
+    val newVolume: Int
 ) : WsPacket()
 
 @Serializable
 data class WsPacketUpdateSongDurationPosition(
-        val postition: Long
+    val postition: Long
 ) : WsPacket()
 
 @Serializable
 data class WsPacketBotPlayerUpdateIsPlaying(
-        val isPlaying: Boolean? = null
+    val isPlaying: Boolean? = null
 ) : WsPacket()
 
 @Serializable
 data class WsPacketUpdateSongInfo(
-        //title of track or null if no track is playing
-        val title: String? = null,
-        val author: String? = null,
-        //lenght of the song in millis or null if stream
-        val length: Long? = null
+    //title of track or null if no track is playing
+    val title: String? = null,
+    val author: String? = null,
+    //lenght of the song in millis or null if stream
+    val length: Long? = null
 ) : WsPacket()
 
 @Serializable
 data class WsPacketUpdateBotInfo(
-        val data: BotData? = null
+    val data: BotData? = null
 ) : WsPacket()
 
 @Serializable
@@ -171,49 +191,53 @@ object WsPacketBotPlayerStopTrack : WsPacket()
 
 @Serializable
 data class PacketLoginRequest(
-        val username: String,
-        val password: String,
-        val otp: String? = null
+    val username: String,
+    val password: String,
+    val otp: String? = null
 )
 
 @Serializable
 data class ChangeThemeRequest(
-        val newTheme: WebTheme
+    val newTheme: WebTheme
 )
 
 @Serializable
 data class PacketLoginResponse(
-        val status: LoginStatusResponse
+    val status: LoginStatusResponse
 )
 
 @Serializable
-data class PacketBotsResponse(
-        val bots: List<BotData>
+class PacketBotsResponse(
+    val bots: List<BotData> = listOf()
 )
 
+@Serializable
+class PacketBotsTestResponse(
+    val bots: List<String> = listOf()
+)
 
 /* Data container */
 
 @Serializable
 data class BotData(
-        val identifier: BotIdentifier,
-        val name: String,
-        val isChildBot: Boolean,
-        val isMusicBot: Boolean
+    val identifier: BotIdentifier,
+    val name: String,
+    val isChildBot: Boolean,
+    val isMusicBot: Boolean
 )
 
 @Serializable
 data class ContentInfomation(
-        val contentIdentifier: String,
-        val title: String? = null,
-        val path: String? = null
+    val contentIdentifier: String,
+    val title: String? = null,
+    val path: String? = null
 )
 
 @Serializable
 data class BotIdentifier(
-        val mostSignificantBits: Long,
-        val leastSignificantBits: Long,
-        val subID: Long? = null
+    val mostSignificantBits: Long,
+    val leastSignificantBits: Long,
+    val subID: Long? = null
 )
 
 enum class DashboardPage(val path: String) {

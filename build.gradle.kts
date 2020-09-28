@@ -11,11 +11,12 @@ plugins {
     id("org.jetbrains.dokka") version "1.4.0"
     id("com.github.ksoichiro.build.info") version "0.2.0"
 
-    val KOTLIN_VERSION = "1.4.0"
+    val KOTLIN_VERSION = "1.4.10"
     kotlin("jvm") version KOTLIN_VERSION
     kotlin("kapt") version KOTLIN_VERSION
     kotlin("plugin.spring") version KOTLIN_VERSION
     kotlin("plugin.jpa") version KOTLIN_VERSION
+    kotlin("plugin.allopen") version KOTLIN_VERSION
 }
 
 group = "eu.musicnova"
@@ -38,6 +39,7 @@ allprojects {
     }
 }
 
+val agentProjectName =":musicnova-lazy-load-agent"
 dependencies {
     //implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-mail")
@@ -64,16 +66,19 @@ dependencies {
 
     implementation(project(":musicnova-shared"))
     //kapt("org.springframework.boot:spring-boot-configuration-processor")
+
+    //implementation("org.casbin:casbin-spring-boot-starter:0.0.9")
+
     implementation("org.fusesource.jansi:jansi:1.18")
     implementation("org.apache.commons:commons-text:1.9")
     implementation("com.moandjiezana.toml:toml4j:0.7.1")
     //implementation(group = "com.uchuhimo", name = "konf", version = "0.22.1")
     listOf(
-            "konf-core",
-            "konf-hocon",
-            "konf-toml",
-            "konf-xml",
-            "konf-yaml"
+        "konf-core",
+        "konf-hocon",
+        "konf-toml",
+        "konf-xml",
+        "konf-yaml"
     ).forEach { name ->
         implementation("com.github.Cybermaxke.konf:$name:449becc276")
     }
@@ -117,11 +122,11 @@ dependencies {
     implementation("com.github.papsign:Ktor-OpenAPI-Generator:0.2-beta.2-experimental")
 
     listOf(
-            "ktor-server-netty",
-            "ktor-html-builder",
-            "ktor-websockets",
-            "ktor-jackson",
-            "ktor-auth"
+        "ktor-server-netty",
+        "ktor-html-builder",
+        "ktor-websockets",
+        "ktor-jackson",
+        "ktor-auth"
     ).forEach { name ->
         implementation("io.ktor", name, "1.4.0")
     }
@@ -129,6 +134,7 @@ dependencies {
     listOf("exposed-core", "exposed-dao", "exposed-jdbc", "exposed-jodatime", "exposed-java-time").forEach { name ->
         implementation("org.jetbrains.exposed", name, "0.27.1")
     }
+    implementation(project(agentProjectName))
 
     //kapt("org.inferred:freebuilder:2.6.2")
     implementation("org.inferred:freebuilder:2.6.1")
@@ -147,6 +153,7 @@ dependencies {
     //implementation("de.swirtz:ktsRunner:0.0.8")
     //implementation("com.zaxxer:nuprocess:2.0.0")
 
+    implementation("org.greenrobot:eventbus:3.2.0")
     implementation("com.google.guava:guava:29.0-jre")
     implementation("org.jgrapht:jgrapht-core:1.5.0")
     implementation("com.jcabi:jcabi-manifests:1.1")
@@ -170,30 +177,37 @@ tasks {
             jvmTarget = "11"
         }
     }
-    create("copy-web-files") {
-        dependsOn("pre-copy-web-files", "copy-kotlin-js", "copy-assets")
+    val copyResName = "copy-resource-files"
+    val preCopyResName = "pre-copy-resource-files"
+    create(copyResName) {
+        dependsOn(preCopyResName, "copy-kotlin-js", "copy-assets", "copy-plugin-agent")
     }
-    create("pre-copy-web-files") {
+    create(preCopyResName) {
         dependsOn(JavaPlugin.PROCESS_RESOURCES_TASK_NAME)
     }
     create<NpmTask>("build-webpack") {
-        dependsOn("npmInstall", "pre-copy-web-files")
+        dependsOn("npmInstall", preCopyResName)
         setArgs(listOf("run", "webpack"))
     }
     create<Copy>("copy-assets") {
-        dependsOn("pre-copy-web-files", "build-webpack")
+        dependsOn(preCopyResName, "build-webpack")
         from("${buildDir.path}/webpack/assets/")
         into("${buildDir.path}/resources/main/web/assets/")
     }
     create<Copy>("copy-kotlin-js") {
         val frontendProject = project(":musicnova-frontend")
-        dependsOn(":musicnova-frontend:browserProductionWebpack", "pre-copy-web-files")
+        dependsOn(":musicnova-frontend:browserProductionWebpack", preCopyResName)
         from("${frontendProject.buildDir.path}/distributions/")
         into("${buildDir.path}/resources/main/web/assets/js/")
-
+    }
+    create<Copy>("copy-plugin-agent") {
+        dependsOn(preCopyResName, "$agentProjectName:shadowJar")
+        val agentProject = project(agentProjectName)
+        from("${agentProject.buildDir.path}/libs/")
+        into("${buildDir.path}/resources/main/files/")
     }
     classes {
-        dependsOn("copy-web-files")
+        dependsOn("copy-resource-files")
     }
     clean {
         delete("src/main/web/node_modules")

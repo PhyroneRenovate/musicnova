@@ -105,7 +105,7 @@ module.exports = {
         }),
         new CopyPlugin({
             patterns: [
-                {from: 'node_modules/ionicons/dist/', to: 'assets/3rd/ionicons/'},
+                {from: 'node_modules/ionicons/dist/', to: 'assets/3th/ionicons/'},
             ],
         }),
         new RemovePlugin({
