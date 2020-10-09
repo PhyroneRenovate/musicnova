@@ -27,10 +27,10 @@ abstract class HikariDatasourceProvider : DatasourceProvider {
         if (!driverClass.isNullOrBlank()) {
             hikariConfig.driverClassName = driverClass
         }
-        val username = config.get(configSpec.username)
+        val username = config[configSpec.username]
         if (username?.isNotBlank() == true)
             hikariConfig.username = username
-        val password = config.get(configSpec.password)
+        val password = config[configSpec.password]
         if (password?.isNotBlank() == true)
             hikariConfig.password = password
 

@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import java.io.*
+import java.lang.RuntimeException
 import java.util.regex.Pattern
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
@@ -113,8 +114,7 @@ class TerminalManager {
     private fun overrideSystemOut(lineReader: LineReader) {
         sysOut = System.out
         System.setOut(PrintStream(StringLineOutputStream { line ->
-            if (lineReader.isReading) lineReader.printAbove(AttributedString.fromAnsi(line))
-            else AnsiConsole.out.println(line)
+            lineReader.printAbove(AttributedString.fromAnsi(line))
         }, true))
     }
 
@@ -152,6 +152,15 @@ class TerminalManager {
                 usage.forEach { line ->
                     println(line)
                 }
+            }
+        }
+        //TODO("remove")
+        terminalCommandDispatcher.literal("testerror") {
+            runs {
+                thread(name = "failing thread",start = false) {
+                    logger.error("Testerror Stareted...")
+                    throw RuntimeException("expected fail")
+                }.start()
             }
         }
     }

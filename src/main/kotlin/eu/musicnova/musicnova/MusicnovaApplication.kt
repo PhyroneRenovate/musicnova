@@ -2,7 +2,6 @@
 
 package eu.musicnova.musicnova
 
-
 import eu.musicnova.musicnova.event.AppStartedEvent
 import eu.musicnova.musicnova.event.api.EventHandler
 import eu.musicnova.musicnova.event.api.EventListener

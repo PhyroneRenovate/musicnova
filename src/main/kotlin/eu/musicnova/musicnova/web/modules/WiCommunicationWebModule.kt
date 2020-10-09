@@ -104,6 +104,10 @@ class WiCommunicationWebModule : WebModule {
                 TODO("implement")
             }
 
+            get(SharedConst.INTERNAL_GET_TRACKS_PATH) {
+                TODO()
+            }
+
             webSocket(SharedConst.SOCKET_PATH) {
                 with(webSessionAuthManager) {
                     val session = call.getUserSession()

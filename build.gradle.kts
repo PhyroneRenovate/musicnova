@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.moowork.gradle.node.npm.NpmTask
-import com.github.ksoichiro.build.info.BuildInfoExtension
+//import com.github.ksoichiro.build.info.BuildInfoExtension
 
 plugins {
     idea
@@ -9,7 +9,8 @@ plugins {
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("com.github.node-gradle.node") version "2.2.4"
     id("org.jetbrains.dokka") version "1.4.0"
-    id("com.github.ksoichiro.build.info") version "0.2.0"
+    //id("com.github.ksoichiro.build.info") version "0.2.0"
+    id("com.gorylenko.gradle-git-properties" ) version "2.2.3"
 
     val KOTLIN_VERSION = "1.4.10"
     kotlin("jvm") version KOTLIN_VERSION
@@ -39,11 +40,10 @@ allprojects {
     }
 }
 
-val agentProjectName =":musicnova-lazy-load-agent"
 dependencies {
     //implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-mail")
-    //implementation("org.springframework.boot:spring-boot-starter-quartz")
+    implementation("org.springframework.boot:spring-boot-starter-quartz")
     //implementation("org.springframework.boot:spring-boot-starter-rsocket")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -65,6 +65,12 @@ dependencies {
     implementation("com.github.lalyos:jfiglet:0.0.8")
 
     implementation(project(":musicnova-shared"))
+
+    implementation("io.sentry:sentry-logback:3.0.0")
+    /*implementation("io.sentry:sentry-spring-boot-starter:3.0.0"){
+        exclude(module = "spring-web")
+        exclude(module = "spring-webmvc")
+    }*/
     //kapt("org.springframework.boot:spring-boot-configuration-processor")
 
     //implementation("org.casbin:casbin-spring-boot-starter:0.0.9")
@@ -111,7 +117,6 @@ dependencies {
     implementation("com.github.Phyrone:brigardier-kotlin:1.3.3")
     implementation("com.zaxxer:HikariCP:3.4.5")
     implementation("org.xeustechnologies:jcl-core:2.8")
-    implementation("io.sentry:sentry-spring:1.7.30")
     implementation("de.vandermeer:asciitable:0.3.2")
     implementation("com.github.excitement-engineer:ktor-graphql:2.0.0") {
         exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
@@ -134,7 +139,6 @@ dependencies {
     listOf("exposed-core", "exposed-dao", "exposed-jdbc", "exposed-jodatime", "exposed-java-time").forEach { name ->
         implementation("org.jetbrains.exposed", name, "0.27.1")
     }
-    implementation(project(agentProjectName))
 
     //kapt("org.inferred:freebuilder:2.6.2")
     implementation("org.inferred:freebuilder:2.6.1")
@@ -180,7 +184,7 @@ tasks {
     val copyResName = "copy-resource-files"
     val preCopyResName = "pre-copy-resource-files"
     create(copyResName) {
-        dependsOn(preCopyResName, "copy-kotlin-js", "copy-assets", "copy-plugin-agent")
+        dependsOn(preCopyResName, "copy-kotlin-js", "copy-assets")
     }
     create(preCopyResName) {
         dependsOn(JavaPlugin.PROCESS_RESOURCES_TASK_NAME)
@@ -199,12 +203,6 @@ tasks {
         dependsOn(":musicnova-frontend:browserProductionWebpack", preCopyResName)
         from("${frontendProject.buildDir.path}/distributions/")
         into("${buildDir.path}/resources/main/web/assets/js/")
-    }
-    create<Copy>("copy-plugin-agent") {
-        dependsOn(preCopyResName, "$agentProjectName:shadowJar")
-        val agentProject = project(agentProjectName)
-        from("${agentProject.buildDir.path}/libs/")
-        into("${buildDir.path}/resources/main/files/")
     }
     classes {
         dependsOn("copy-resource-files")
@@ -235,12 +233,17 @@ node {
 
     nodeModulesDir = file("src/main/web")
 }
+/*
 buildInfo {
     manifestEnabled = true
-    gitPropertiesEnabled = true
+    gitPropertiesEnabled = false
     gitInfoMode = BuildInfoExtension.MODE_DEFAULT
 }
+*/
 
 idea {
 
+}
+gitProperties{
+    gitPropertiesName = "git.properties"
 }

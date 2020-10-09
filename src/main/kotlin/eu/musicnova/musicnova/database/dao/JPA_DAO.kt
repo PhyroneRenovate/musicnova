@@ -1,4 +1,5 @@
 @file:Suppress("")
+
 package eu.musicnova.musicnova.database.dao
 
 import com.github.manevolent.ts3j.identity.LocalIdentity
@@ -6,22 +7,26 @@ import com.github.manevolent.ts3j.util.Ts3Crypt
 import com.google.common.hash.Hashing
 import eu.musicnova.musicnova.bot.teamspeak.TeamspeakBotManager
 import eu.musicnova.musicnova.bot.teamspeak.TeamspeakClientProtocolVersion
+import eu.musicnova.musicnova.permission.PermissionIdentificationStrategy
+import eu.musicnova.musicnova.permission.PersistentPermissionEntryData
 import eu.musicnova.musicnova.utils.MnRepository
 import org.hibernate.annotations.Cache
 import org.hibernate.annotations.CacheConcurrencyStrategy
 import org.springframework.data.jpa.repository.Modifying
+import java.io.Serializable
 import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.util.*
 import javax.persistence.*
+import kotlin.collections.ArrayList
 
 
 @Entity
 @Table(name = "bot")
 @Inheritance(strategy = InheritanceType.JOINED)
 open class PersistentBotData(
-        open var name: String? = null,
-        open var connected: Boolean = true
+    open var name: String? = null,
+    open var connected: Boolean = true
 ) {
     @Id
     open var id: UUID = UUID.randomUUID()
@@ -31,31 +36,35 @@ open class PersistentBotData(
 @Entity
 @Table(name = "bot_teamspeak")
 data class PersistentTeamspeakBotData(
-        var host: String = "",
-        var port: Int? = null,
-        var hostResolve: TeamspeakBotManager.TeamspeakResoveMode = TeamspeakBotManager.TeamspeakResoveMode.NONE,
-        var nickname: String = "TeamspeakBot",
-        var timeout: Long = 10000,
-        var serverPassword: String? = null,
-        var channel: Int? = null,
-        var channelPassword: String? = null,
-        var hwid: String? = null,
-        var serverVersion: TeamspeakClientProtocolVersion? = null,
-        @ManyToOne(optional = true)
-        var identity: PersistentTeamspeakIdentity? = null
+    var host: String = "",
+    var port: Int? = null,
+    var hostResolve: TeamspeakBotManager.TeamspeakResoveMode = TeamspeakBotManager.TeamspeakResoveMode.NONE,
+    var nickname: String = "TeamspeakBot",
+    var timeout: Long = 10000,
+    var serverPassword: String? = null,
+    var channel: Int? = null,
+    var channelPassword: String? = null,
+    var hwid: String? = null,
+    var serverVersion: TeamspeakClientProtocolVersion? = null,
+    @ManyToOne(optional = true)
+    var identity: PersistentTeamspeakIdentity? = null
 ) : PersistentBotData()
 
 @Entity
 @Table(name = "teamspeak_identity")
 data class PersistentTeamspeakIdentity(
-        @Lob var asn: ByteArray,
-        @Column(name = "asn_offset")
-        var offset: Long,
-        var nickname: String? = null,
-        @Id var uuid: UUID = UUID.randomUUID()
+    @Lob var asn: ByteArray,
+    @Column(name = "asn_offset")
+    var offset: Long,
+    var nickname: String? = null,
+    @Id var uuid: UUID = UUID.randomUUID()
 ) {
 
-    constructor(identity: LocalIdentity, nickname: String? = null) : this(identity.toASN(), identity.keyOffset, nickname)
+    constructor(identity: LocalIdentity, nickname: String? = null) : this(
+        identity.toASN(),
+        identity.keyOffset,
+        nickname
+    )
 
     @OneToMany(mappedBy = "identity")
     var bots: Set<PersistentTeamspeakBotData> = setOf()
@@ -98,24 +107,24 @@ data class PersistentTeamspeakIdentity(
 @Entity
 @Table(name = "audio_controller")
 data class PersistentAudioControllerData(
-        @Id val uuid: UUID,
-        var volume: Int
+    @Id val uuid: UUID,
+    var volume: Int
 )
 
 data class PeristentAudioTrackData(
-        var name: String
+    var name: String
 )
 
 @Entity
 @Table(name = "web_user")
 data class PersistentWebUserData(
-        @Column(length = 255, unique = true)
-        var username: String,
-        @Column(length = 64)
-        var password: ByteArray,
-        @Column(length = 16, unique = true)
-        var salt: ByteArray,
-        @Id var userID: UUID = UUID.randomUUID()
+    @Column(length = 255, unique = true)
+    var username: String,
+    @Column(length = 64)
+    var password: ByteArray,
+    @Column(length = 16, unique = true)
+    var salt: ByteArray,
+    @Id var userID: UUID = UUID.randomUUID()
 ) {
 
     override fun equals(other: Any?): Boolean {
@@ -162,8 +171,8 @@ data class PersistentWebUserData(
         }
 
         private fun hashPassword(password: String, salt: ByteArray): ByteArray = hashing.newHasher()
-                .putString(password, Charsets.UTF_8).putBytes(salt)
-                .hash().asBytes()
+            .putString(password, Charsets.UTF_8).putBytes(salt)
+            .hash().asBytes()
 
         private fun newSalt(): ByteArray {
             val newSalt = ByteArray(16)
@@ -186,53 +195,72 @@ data class PersistentWebUserSessionData(
 
 @Entity
 @Table(name = "audio_track")
-@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "type", length = 16)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 open class PersistentAudioTrackData(
-        open val title: String,
-        @Id open val uuid: UUID = UUID.randomUUID()
+    open val title: String,
+    @Id open val uuid: UUID = UUID.randomUUID()
 )
 
 @Entity
-@Table(name = "audio_track_local")
+@DiscriminatorValue("LOCAL")
 open class PersistentLocalAudioTrackData(
-        title: String,
-        open val file: String
+    title: String,
+    open val file: String
 ) : PersistentAudioTrackData(title)
 
 @Entity
-@Table(name = "audio_track_remote")
+@DiscriminatorValue("REMOTE")
 open class PersistentRemoteAudioTrackData(
-        title: String,
-        open val url: String
+    title: String,
+    open val url: String
 ) : PersistentAudioTrackData(title)
 
+@Entity
+@Table(name = "permission_entity")
+@DiscriminatorColumn(name = "type", length = 16)
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+open class PersistentPermissionEntityData(
+    @Id open val id: UUID = UUID.randomUUID()
+) {
 
-interface WebUserSessionDatabase : MnRepository<PersistentWebUserSessionData, String> {
-    @Modifying
-    fun deleteByLastSeenDateAfter(deadLine: LocalDateTime)
 
-    @Modifying
-    fun deleteByLastSeenDateBefore(deadLine: LocalDateTime)
 
-    @Modifying
-    fun deleteByLoginDateAfter(deadLine: LocalDateTime)
+    @CollectionTable(
+        name = "permission_entity_permisions",
+        joinColumns = [JoinColumn(name = "entity")],
+    )
+    @Lob
+    @Column(name = "permission")
+    @ElementCollection
+    @Suppress("JpaAttributeTypeInspection")
+    open var permissions: List<PersistentPermissionEntryData> = listOf()
 
-    @Modifying
-    fun deleteByLoginDateBefore(deadLine: LocalDateTime)
-
-    @Modifying
-    fun deleteBySessionToken(token: String)
+    @ManyToMany(targetEntity = PersistentPermissionGroupEntityData::class)
+    @JoinTable(
+        name = "permission_group_parent_child_ref",
+        joinColumns = [JoinColumn(name = "parent")],
+        inverseJoinColumns = [JoinColumn(name = "child")]
+    )
+    open lateinit var parents: List<PersistentPermissionGroupEntityData>
 }
 
-interface WebUserDatabase : MnRepository<PersistentWebUserData, UUID> {
-    fun findByUsername(username: String): PersistentWebUserData?
+@Entity
+@DiscriminatorValue("CLIENT")
+open class PersistentPermissionClientEntityData(
+    open val platform: String,
+    open val identifier: String
+) : PersistentPermissionEntityData()
+
+@Entity
+@DiscriminatorValue("GROUP")
+open class PersistentPermissionGroupEntityData(
+    @Column(name = "group_name", unique = true)
+    open val name: String,
+) : PersistentPermissionEntityData() {
+
+    @ManyToMany(mappedBy = "parents", targetEntity = PersistentPermissionEntityData::class)
+    open lateinit var children: List<PersistentPermissionEntityData>
 }
 
-interface AudioContollerDatabase : MnRepository<PersistentAudioControllerData, UUID>
-
-interface BotDatabase : MnRepository<PersistentBotData, UUID>
-interface TeamspeakBotDatabase : MnRepository<PersistentTeamspeakBotData, UUID>
-interface TeamspeakIdentiyDatabase : MnRepository<PersistentTeamspeakIdentity, UUID> {
-    fun findByNickname(nickname: String): PersistentTeamspeakIdentity?
-
-}

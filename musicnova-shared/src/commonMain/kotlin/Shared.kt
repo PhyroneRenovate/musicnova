@@ -3,11 +3,7 @@
 package eu.musicnova.shared
 
 import kotlinx.serialization.*
-import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
-import kotlinx.serialization.protobuf.ProtoNumber
-import kotlinx.serialization.protobuf.ProtoType
-import kotlin.js.JsName
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 
@@ -21,6 +17,7 @@ object SharedConst {
     const val INTERNAL_LOGOUT_PATH = "$INTERNAL_API_PATH/logout"
     const val INTERNAL_OTP_PATH = "$INTERNAL_API_PATH/otp"
     const val INTERNAL_SET_SELECT_COOkIE = "$INTERNAL_API_PATH/setBotSelectCookie"
+    const val INTERNAL_GET_TRACKS_PATH = "$INTERNAL_API_PATH/getTracks"
 
     const val INTERNAL_SET_THEME_PATH = "$INTERNAL_LOGIN_PATH/setTheme"
     const val INTERNAL_GET_BOTS_REQUEST = "$INTERNAL_API_PATH/getBots"
@@ -56,7 +53,8 @@ enum class WsPacketID(val serializer: KSerializer<out WsPacket>) {
     PLAYER_UPDATE_SONG_INFO(WsPacketUpdateSongInfo.serializer()),
     PLAYER_UPDATE_SONG_DURATION(WsPacketUpdateSongDurationPosition.serializer()),
     UPDATE_BOT_INFO(WsPacketUpdateBotInfo.serializer()),
-    PLAYER_STOP_TRACK(WsPacketBotPlayerStopTrack.serializer())
+    PLAYER_STOP_TRACK(WsPacketBotPlayerStopTrack.serializer()),
+    PLAYER_PLAY_TRACK(WsPacketBotPlayTrack.serializer())
 }
 
 
@@ -108,6 +106,7 @@ object WsPacketSerializer {
             this
         )
         is WsPacketBotPlayerStopTrack -> protoBuf.encodeToByteArray(serializer(), this)
+        is WsPacketBotPlayTrack -> protoBuf.encodeToByteArray(serializer(), this)
     }
 
     private fun WsPacket.packetID() = when (this) {
@@ -121,6 +120,7 @@ object WsPacketSerializer {
         is WsPacketUpdateBotInfo -> WsPacketID.UPDATE_BOT_INFO
         is WsPacketUpdateSongDurationPosition -> WsPacketID.PLAYER_UPDATE_SONG_DURATION
         is WsPacketBotPlayerStopTrack -> WsPacketID.PLAYER_STOP_TRACK
+        is WsPacketBotPlayTrack -> WsPacketID.PLAYER_PLAY_TRACK
     }
 
 
@@ -179,6 +179,11 @@ data class WsPacketUpdateSongInfo(
 ) : WsPacket()
 
 @Serializable
+data class WsPacketBotPlayTrack(
+    val track: UUIDIdentifier
+) : WsPacket()
+
+@Serializable
 data class WsPacketUpdateBotInfo(
     val data: BotData? = null
 ) : WsPacket()
@@ -212,11 +217,17 @@ class PacketBotsResponse(
 )
 
 @Serializable
-class PacketBotsTestResponse(
-    val bots: List<String> = listOf()
+data class PacketListTracksResponse(
+    val tracks: List<AudioTrackData>
 )
 
 /* Data container */
+
+@Serializable
+data class AudioTrackData(
+    val identifier: UUIDIdentifier,
+    val title: String
+)
 
 @Serializable
 data class BotData(
@@ -235,10 +246,24 @@ data class ContentInfomation(
 
 @Serializable
 data class BotIdentifier(
-    val mostSignificantBits: Long,
-    val leastSignificantBits: Long,
+    override val mostSignificantBits: Long,
+    override val leastSignificantBits: Long,
     val subID: Long? = null
-)
+) : UUIDTranslatable {
+    constructor(identifier: UUIDTranslatable, subID: Long? = null) : this(
+        identifier.mostSignificantBits,
+        identifier.leastSignificantBits,
+        subID
+    )
+}
+
+@Serializable
+data class UUIDIdentifier(
+    override val mostSignificantBits: Long,
+    override val leastSignificantBits: Long
+) : UUIDTranslatable {
+
+}
 
 enum class DashboardPage(val path: String) {
     DASHBOARD("/"), PROFILE("/profile")

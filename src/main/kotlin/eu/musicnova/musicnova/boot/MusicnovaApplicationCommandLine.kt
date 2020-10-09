@@ -2,29 +2,23 @@
 
 package eu.musicnova.musicnova.boot
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.LoggerContext
 import com.github.lalyos.jfiglet.FigletFont
-import com.github.lalyos.jfiglet.JFiglet
-import com.jcabi.manifests.Manifests
-import com.sun.tools.attach.VirtualMachine
 import eu.musicnova.musicnova.MusicnovaApplication
 import eu.musicnova.musicnova.beans.present.InitCommandLineBeanPresent
 import eu.musicnova.musicnova.utils.Const
 import eu.musicnova.musicnova.utils.isIDEA
 import eu.musicnova.shared.SharedConst
+import io.sentry.Sentry
 import org.fusesource.jansi.AnsiConsole
 import org.slf4j.LoggerFactory
-import org.springframework.beans.MutablePropertyValues
 import org.springframework.beans.factory.getBean
-import org.springframework.beans.factory.support.GenericBeanDefinition
 import org.springframework.boot.SpringApplication
-import org.springframework.boot.runApplication
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import oshi.software.os.OSProcess
-import oshi.software.os.OperatingSystem
 import picocli.CommandLine
-import java.lang.instrument.Instrumentation
-import java.util.*
 import kotlin.system.exitProcess
 
 
@@ -37,21 +31,36 @@ import kotlin.system.exitProcess
 class MusicnovaApplicationCommandLine : Runnable {
 
 
-    @CommandLine.Option(names = ["--debug"], description = ["enables the debug log"])
+    @CommandLine.Option(
+        names = ["--debug"],
+        description = ["enables the debug log"]
+    )
     var debug = false
 
-    @CommandLine.Option(names = [Const.ROOT_BYPASS_FLAG])
-    var ignoreRoot = false
+    @CommandLine.Option(
+        names = [Const.ROOT_BYPASS_FLAG],
+        hidden = true
+    )
+    var allowRoot = false
 
-    @CommandLine.Option(names = ["-c", "--config"])
+    @CommandLine.Option(
+        names = ["-c", "--config"]
+    )
     var configFileName = "config.yml"
 
-    @CommandLine.Option(names = ["-i", "--interactive"])
+    @CommandLine.Option(
+        names = ["-i", "--interactive"]
+    )
     var interactive: Boolean = false
+
+    @CommandLine.Option(
+        names = [Const.DISABLE_SENTRY_FLAG]
+    )
+    var disableSentry = false
 
 
     private fun checkRoot(process: OSProcess) {
-        if (!ignoreRoot && isRoot(process)) {
+        if (!allowRoot && isRoot(process)) {
             val rootCheckLogger = LoggerFactory.getLogger("RootCheck")
             rootCheckLogger.error(
                 "We Detected you running MusicNova as root user. this is forbidden by Default\n" + FigletFont.convertOneLine(
@@ -69,6 +78,19 @@ class MusicnovaApplicationCommandLine : Runnable {
         if (debug) {
             setDebugFlags()
         }
+        if (!disableSentry) {
+            println("MusicNova sends error data automatically to sentry.phyrone.de")
+            println("if you disagree with that start the bot with '${Const.DISABLE_SENTRY_FLAG}' flag")
+            Sentry.init { options ->
+                options.dsn = "https://df5feaac76a6489ea3eb116a2dd37191@sentry.phyrone.de/2"
+                options.isEnableUncaughtExceptionHandler = true
+            }
+        } else {
+            (LoggerFactory.getILoggerFactory() as? LoggerContext)
+                ?.getLogger(Logger.ROOT_LOGGER_NAME)
+                ?.detachAppender("SENTRY")
+        }
+
         if (interactive)
             System.setProperty(Const.INTERACTIVE_PROPERTY_FULL_NAME, "true")
 

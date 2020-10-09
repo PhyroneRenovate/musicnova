@@ -42,15 +42,12 @@ class MiscComponets {
     fun audioTrackFolder(@Qualifier(Const.BEAN_DATA_FOLDER) dataFolder: File) = File(dataFolder, "audio")
 
 
-    //TODO("implement sentry (+ disable option)")
-    //@Bean fun senry(): SentryClient = Sentry.init("https://4c3668b7a6b34a1da4feddb0755744e2@sentry.phyrone.de/8")
-
     @Autowired
     @Qualifier(Const.BEAN_TEMP_FOLDER)
-    lateinit var tempFolder:File
+    lateinit var tempFolder: File
 
     @PreDestroy
-    fun onMiscDestroy(){
+    fun onMiscDestroy() {
         tempFolder.deleteRecursively()
     }
 }
