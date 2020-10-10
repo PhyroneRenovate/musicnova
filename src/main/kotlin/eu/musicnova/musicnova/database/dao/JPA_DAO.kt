@@ -1,4 +1,4 @@
-@file:Suppress("")
+@file:Suppress("JpaDataSourceORMInspection")
 
 package eu.musicnova.musicnova.database.dao
 
@@ -36,14 +36,22 @@ open class PersistentBotData(
 @Entity
 @Table(name = "bot_teamspeak")
 data class PersistentTeamspeakBotData(
+    @Lob
     var host: String = "",
+    @Column(nullable = true)
     var port: Int? = null,
+    @Enumerated(EnumType.ORDINAL)
     var hostResolve: TeamspeakBotManager.TeamspeakResoveMode = TeamspeakBotManager.TeamspeakResoveMode.NONE,
+    @Column(nullable = false, length = 16)
     var nickname: String = "TeamspeakBot",
     var timeout: Long = 10000,
+    @Column(nullable = true) @Lob
     var serverPassword: String? = null,
+    @Column(nullable = true)
     var channel: Int? = null,
+    @Column(nullable = true) @Lob
     var channelPassword: String? = null,
+    @Column(nullable = true) @Lob
     var hwid: String? = null,
     var serverVersion: TeamspeakClientProtocolVersion? = null,
     @ManyToOne(optional = true)
@@ -56,6 +64,7 @@ data class PersistentTeamspeakIdentity(
     @Lob var asn: ByteArray,
     @Column(name = "asn_offset")
     var offset: Long,
+    @Column(nullable = true)
     var nickname: String? = null,
     @Id var uuid: UUID = UUID.randomUUID()
 ) {
@@ -224,7 +233,6 @@ open class PersistentRemoteAudioTrackData(
 open class PersistentPermissionEntityData(
     @Id open val id: UUID = UUID.randomUUID()
 ) {
-
 
 
     @CollectionTable(

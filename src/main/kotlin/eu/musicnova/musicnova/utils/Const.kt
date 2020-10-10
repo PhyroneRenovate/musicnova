@@ -15,7 +15,5 @@ object Const {
     const val BEAN_NAME_CLI_PRESENT = "init_cli_present"
 
     const val BEAN_EXEC_ASYNC_EVENT = "exec_async_event"
-    const val BEAN_FILE_LAZY_AGENT = "lazy_agent"
-
 
 }

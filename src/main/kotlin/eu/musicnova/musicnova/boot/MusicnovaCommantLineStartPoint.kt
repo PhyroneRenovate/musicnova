@@ -19,44 +19,49 @@ import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import oshi.software.os.OSProcess
 import picocli.CommandLine
+import java.io.File
 import kotlin.system.exitProcess
 
 
 @CommandLine.Command(
     name = "MusicNova",
     mixinStandardHelpOptions = true,
-    version = ["""Version: ${SharedConst.VERSION}"""]
-
+    version = ["""Version: ${SharedConst.VERSION}"""],
 )
-class MusicnovaApplicationCommandLine : Runnable {
+class MusicnovaCommantLineStartPoint : Runnable, StartConfiguration {
 
 
     @CommandLine.Option(
         names = ["--debug"],
         description = ["enables the debug log"]
     )
-    var debug = false
+    override var debug = false
 
     @CommandLine.Option(
         names = [Const.ROOT_BYPASS_FLAG],
         hidden = true
     )
-    var allowRoot = false
+    override var allowRoot = false
 
     @CommandLine.Option(
         names = ["-c", "--config"]
     )
-    var configFileName = "config.yml"
+    override var configFileName = "config.yml"
 
     @CommandLine.Option(
         names = ["-i", "--interactive"]
     )
-    var interactive: Boolean = false
+    override var interactive: Boolean = false
 
     @CommandLine.Option(
         names = [Const.DISABLE_SENTRY_FLAG]
     )
-    var disableSentry = false
+    override var disableSentry = false
+
+    @CommandLine.Option(
+        names = ["-f", "--files", "--data-folder"]
+    )
+    override val dataFolder: File = File("data")
 
 
     private fun checkRoot(process: OSProcess) {

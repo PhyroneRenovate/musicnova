@@ -4,11 +4,10 @@ package eu.musicnova.musicnova.terminal
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import de.phyrone.brig.wrapper.literal
 import de.phyrone.brig.wrapper.runs
-import eu.musicnova.musicnova.boot.MusicnovaApplicationCommandLine
+import eu.musicnova.musicnova.boot.MusicnovaCommantLineStartPoint
 import eu.musicnova.musicnova.utils.Const
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import eu.musicnova.musicnova.utils.StringLineOutputStream
-import org.fusesource.jansi.AnsiConsole
 import org.jline.reader.*
 import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.Terminal
@@ -16,13 +15,10 @@ import org.jline.terminal.TerminalBuilder
 import org.jline.utils.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import java.io.*
 import java.lang.RuntimeException
@@ -82,7 +78,7 @@ class TerminalManager {
     fun startTerminal(
         commandDispatcher: TerminalCommandDispatcher,
         lineReader: LineReader,
-        commandLine: MusicnovaApplicationCommandLine
+        commandLine: MusicnovaCommantLineStartPoint
     ) = ApplicationRunner {
         overrideSystemOut(lineReader)
         terminalThread = thread(name = "TerminalReader") {

@@ -1,6 +1,6 @@
 package eu.musicnova.musicnova.web.modules
 
-import eu.musicnova.musicnova.boot.MusicnovaApplicationCommandLine
+import eu.musicnova.musicnova.boot.MusicnovaCommantLineStartPoint
 import eu.musicnova.musicnova.module.WebModule
 import eu.musicnova.musicnova.web.auth.WebSessionAuthManager
 import eu.musicnova.musicnova.web.template.PageTemplate
@@ -10,13 +10,11 @@ import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.html.insert
 import io.ktor.html.respondHtml
-import io.ktor.response.respondRedirect
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.sessions.getOrSet
 import io.ktor.sessions.sessions
 import io.ktor.util.pipeline.PipelineContext
-import io.ktor.util.pipeline.PipelineInterceptor
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Controller
 
@@ -27,7 +25,7 @@ class UserPageWebModule : WebModule {
     lateinit var sessionAuthManager: WebSessionAuthManager
 
     @Autowired
-    lateinit var commandLine: MusicnovaApplicationCommandLine
+    lateinit var commandLine: MusicnovaCommantLineStartPoint
 
     private val sendPageDebug by lazy { commandLine.debug }
 

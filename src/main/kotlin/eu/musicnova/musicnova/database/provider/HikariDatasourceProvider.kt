@@ -19,7 +19,7 @@ abstract class HikariDatasourceProvider : DatasourceProvider {
 
     final override fun get(): DataSource {
         val hikariConfig = HikariConfig()
-        val url = (config[configSpec.url].takeUnless { url -> url.isNullOrBlank() || url == "null" } ?: getURl())
+        val url = (config[configSpec.url].takeUnless { url -> url.isBlank() || url == "null" } ?: getURl())
         hikariConfig.jdbcUrl = url
         hikariConfig.poolName = "musicnova-db-pool"
 
@@ -28,10 +28,10 @@ abstract class HikariDatasourceProvider : DatasourceProvider {
             hikariConfig.driverClassName = driverClass
         }
         val username = config[configSpec.username]
-        if (username?.isNotBlank() == true)
+        if (username.isNotBlank())
             hikariConfig.username = username
         val password = config[configSpec.password]
-        if (password?.isNotBlank() == true)
+        if (password.isNotBlank())
             hikariConfig.password = password
 
         return HikariDataSource(hikariConfig)

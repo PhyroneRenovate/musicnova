@@ -3,6 +3,7 @@ package eu.musicnova.musicnova.beans
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import eu.musicnova.musicnova.beans.present.InitCommandLineBeanPresent
+import eu.musicnova.musicnova.boot.StartConfiguration
 import eu.musicnova.musicnova.utils.Const
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
 import io.sentry.Sentry
@@ -30,7 +31,7 @@ class MiscComponets {
 
     @Bean
     @Qualifier(Const.BEAN_DATA_FOLDER)
-    fun dataFolder() = File("data")
+    fun dataFolder(cli: StartConfiguration) = cli.dataFolder
 
     @Bean
     @Qualifier(Const.BEAN_TEMP_FOLDER)
@@ -41,13 +42,15 @@ class MiscComponets {
     @Qualifier(Const.BEAN_AUDIO_TRACK_FOLDER)
     fun audioTrackFolder(@Qualifier(Const.BEAN_DATA_FOLDER) dataFolder: File) = File(dataFolder, "audio")
 
+    @Component
+    class MiscBeansEndDestroyer{
+        @Autowired
+        @Qualifier(Const.BEAN_TEMP_FOLDER)
+        lateinit var tempFolder: File
 
-    @Autowired
-    @Qualifier(Const.BEAN_TEMP_FOLDER)
-    lateinit var tempFolder: File
-
-    @PreDestroy
-    fun onMiscDestroy() {
-        tempFolder.deleteRecursively()
+        @PreDestroy
+        fun onMiscDestroy() {
+            tempFolder.deleteRecursively()
+        }
     }
 }

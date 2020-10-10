@@ -2,7 +2,7 @@ package eu.musicnova.musicnova.config
 
 import com.uchuhimo.konf.ConfigSpec
 import com.uchuhimo.konf.Feature
-import eu.musicnova.musicnova.boot.MusicnovaApplicationCommandLine
+import eu.musicnova.musicnova.boot.MusicnovaCommantLineStartPoint
 import eu.musicnova.musicnova.utils.ConfigWrapper
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
@@ -17,7 +17,7 @@ class ConfigManager {
 
     @Bean
     fun config(appContext: ApplicationContext, @Named(MAIN_CONFIG_FILE_NAME) configFile: File?,configSpecList: List<ConfigSpec>) = ConfigWrapper {
-        enable(Feature.WRITE_DESCRIPTIONS_AS_COMMENTS)
+        //enable(Feature.WRITE_DESCRIPTIONS_AS_COMMENTS)
         configSpecList.forEach { spec -> addSpec(spec) }
     }.also { configWrapper ->
         logger.info("Load Config...")
@@ -33,7 +33,7 @@ class ConfigManager {
 
     @Bean
     @Named(MAIN_CONFIG_FILE_NAME)
-    fun mainConfig(commandLine: MusicnovaApplicationCommandLine): File? {
+    fun mainConfig(commandLine: MusicnovaCommantLineStartPoint): File? {
         val fileName = commandLine.configFileName
         return if (fileName.isBlank() || fileName.equals("none", true)) {
             null

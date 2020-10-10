@@ -207,7 +207,7 @@ enum class ConfigFormat(private val handler: FormatHandler, private vararg val f
 
     private object VoidTreeNode : TreeNode {
         override val children: MutableMap<String, TreeNode> = mutableMapOf()
-        override var comments: String = ""
+        //override var comments: String = ""
     }
 
     companion object {

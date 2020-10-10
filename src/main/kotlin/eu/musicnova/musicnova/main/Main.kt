@@ -3,14 +3,14 @@
 package eu.musicnova.musicnova.main
 
 import eu.musicnova.musicnova.MusicnovaApplication
-import eu.musicnova.musicnova.boot.MusicnovaApplicationCommandLine
+import eu.musicnova.musicnova.boot.MusicnovaCommantLineStartPoint
 import org.fusesource.jansi.AnsiConsole
 import picocli.CommandLine
 import java.io.File
 
 fun main(args: Array<String>) {
     AnsiConsole.systemInstall()
-    val commandLine = CommandLine(MusicnovaApplicationCommandLine::class.java)
+    val commandLine = CommandLine(MusicnovaCommantLineStartPoint::class.java)
     if (jarName != null) {
         commandLine.commandName = jarName
     }

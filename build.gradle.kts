@@ -12,12 +12,11 @@ plugins {
     //id("com.github.ksoichiro.build.info") version "0.2.0"
     id("com.gorylenko.gradle-git-properties" ) version "2.2.3"
 
-    val KOTLIN_VERSION = "1.4.10"
-    kotlin("jvm") version KOTLIN_VERSION
-    kotlin("kapt") version KOTLIN_VERSION
-    kotlin("plugin.spring") version KOTLIN_VERSION
-    kotlin("plugin.jpa") version KOTLIN_VERSION
-    kotlin("plugin.allopen") version KOTLIN_VERSION
+    kotlin("jvm") version "1.4.10"
+    kotlin("kapt") version "1.4.10"
+    kotlin("plugin.spring") version "1.4.10"
+    kotlin("plugin.jpa") version "1.4.10"
+    kotlin("plugin.allopen") version "1.4.10"
 }
 
 group = "eu.musicnova"
@@ -76,9 +75,12 @@ dependencies {
     //implementation("org.casbin:casbin-spring-boot-starter:0.0.9")
 
     implementation("org.fusesource.jansi:jansi:1.18")
-    implementation("org.apache.commons:commons-text:1.9")
-    implementation("com.moandjiezana.toml:toml4j:0.7.1")
-    //implementation(group = "com.uchuhimo", name = "konf", version = "0.22.1")
+
+
+    //implementation("org.apache.commons:commons-text:1.9")
+    //implementation("com.moandjiezana.toml:toml4j:0.7.1")
+    implementation(group = "com.uchuhimo", name = "konf", version = "0.22.1")
+    /*
     listOf(
         "konf-core",
         "konf-hocon",
@@ -88,6 +90,7 @@ dependencies {
     ).forEach { name ->
         implementation("com.github.Cybermaxke.konf:$name:449becc276")
     }
+    */
 
 
     runtimeOnly("com.h2database:h2")
@@ -152,10 +155,12 @@ dependencies {
     implementation("com.eclipsesource.j2v8:j2v8_win32_x86:4.6.0")
 
     //TODO
-    //implementation("org.python:jython:2.7.2")
-    //implementation("org.luaj:luaj-jse:3.0.1")
-    //implementation("de.swirtz:ktsRunner:0.0.8")
-    //implementation("com.zaxxer:nuprocess:2.0.0")
+    implementation("org.python:jython:2.7.2")
+    implementation("org.luaj:luaj-jse:3.0.1")
+    implementation("de.swirtz:ktsRunner:0.0.8")
+    implementation("com.zaxxer:nuprocess:2.0.0")
+
+    implementation("com.github.marceloaguiarr:valkyrie:1.2.0")
 
     implementation("org.greenrobot:eventbus:3.2.0")
     implementation("com.google.guava:guava:29.0-jre")

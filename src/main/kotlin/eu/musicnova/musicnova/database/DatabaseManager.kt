@@ -5,8 +5,11 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import eu.musicnova.musicnova.database.provider.DatasourceProvider
 import eu.musicnova.musicnova.database.provider.H2DatasourceProvider
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
 import java.lang.RuntimeException
@@ -22,6 +25,7 @@ class DatabaseManager {
     @Autowired
     lateinit var configSpec: DatabaseConfigSpec
 
+
     @Bean
     fun datasource(
         providers: Set<DatasourceProvider>
@@ -33,5 +37,23 @@ class DatabaseManager {
                 true
             ) || provider.alias.any { alias -> alias.equals(type, true) }
         } ?: throw RuntimeException("database with type \"$type\" not found")).get()
+    }
+
+
+    @Bean
+    fun database(
+        dataSource: DataSource,
+        appContext: ApplicationContext,
+        @Suppress("SpringJavaInjectionPointsAutowiringInspection")
+        tables: Array<Table>
+    ): Database {
+        logger.info("Starting Exposed...")
+
+        return Database.connect(dataSource).also { database ->
+            transaction(database) {
+                addLogger(Slf4jSqlDebugLogger)
+                SchemaUtils.createMissingTablesAndColumns(*tables)
+            }
+        }
     }
 }
