@@ -1,7 +1,7 @@
 package eu.musicnova.frontend.login
 
 import eu.musicnova.frontend.startMainPage
-import eu.musicnova.frontend.thrd.Swal
+import eu.musicnova.frontend.externals.Swal
 import eu.musicnova.frontend.utils.Const
 import eu.musicnova.frontend.utils.newBody
 import eu.musicnova.frontend.utils.postRequest

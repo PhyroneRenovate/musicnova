@@ -1,3 +1,4 @@
+
 plugins {
     id("org.jetbrains.kotlin.js")
     idea
@@ -15,23 +16,25 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-js"))
     implementation(project(":musicnova-shared"))
-    implementation(npm("sweetalert2","9.17.1",false))
-    implementation(npm("@vizuaalog/bulmajs","0.11.0",true))
-    implementation(npm("cleave.js","1.6.0",false))
-    implementation(npm("@types/cleave.js","1.4.3",false))
-    implementation(npm("chart.js","2.9.3"))
-    //implementation(npm("@types/chart.js","2.9.24",true))
+    implementation(npm("sweetalert2", "9.17.1", false))
+    implementation(npm("@vizuaalog/bulmajs", "0.11.0", false))
+    implementation(npm("cleave.js", "1.6.0", false))
+    implementation(npm("@types/cleave.js", "1.4.3", false))
+    implementation(npm("chart.js", "2.9.3"))
+    implementation(npm("dropzone", "5.7.2"))
+    implementation(npm("@types/dropzone", "5.7.1", false))
+    implementation(npm("@types/chart.js","2.9.24",false))
     implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.9")
 }
-kotlin{
+
+kotlin {
 
     js {
-
-        browser{
+        browser {
             dceTask {
                 dceOptions {
-                    devMode = true
+                    devMode = false
                 }
             }
             distribution {}
@@ -45,10 +48,11 @@ kotlin{
             testTask {
                 useKarma {
                     useChromeHeadless()
-                    webpackConfig.cssSupport.enabled = true
+                    useFirefox()
+                    useSafari()
+                    useOpera()
                 }
             }
         }
-        binaries.executable()
     }
 }

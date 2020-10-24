@@ -1,9 +1,12 @@
 package eu.musicnova.frontend.dashboard
 
-import eu.musicnova.frontend.thrd.Swal
-import eu.musicnova.frontend.thrd.fire
+import eu.musicnova.frontend.externals.Dropzone
+import eu.musicnova.frontend.externals.Swal
+import eu.musicnova.frontend.externals.fire
 import eu.musicnova.frontend.utils.*
 import eu.musicnova.shared.*
+import kotlinx.browser.document
+import kotlinx.browser.window
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.html.InputType
@@ -11,12 +14,21 @@ import kotlinx.html.TagConsumer
 import kotlinx.html.dom.append
 import kotlinx.html.id
 import kotlinx.html.js.*
+import kotlinx.html.js.a
+import kotlinx.html.js.button
+import kotlinx.html.js.div
+import kotlinx.html.js.i
+import kotlinx.html.js.input
+import kotlinx.html.js.label
+import kotlinx.html.js.li
+import kotlinx.html.js.p
+import kotlinx.html.js.span
+import kotlinx.html.js.ul
 import kotlinx.html.role
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.w3c.dom.*
 import org.w3c.dom.events.Event
-import kotlinx.browser.window
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -35,6 +47,7 @@ class DashboardSession {
     private lateinit var playerCurrentTimeLabelSpan: HTMLSpanElement
     private lateinit var playPauseIcon: HTMLElement
     private lateinit var botConnectedSwitch: HTMLInputElement
+    private lateinit var contentDIV: HTMLDivElement
     private var volumeDurationSliderUpdateLock = false
     private var volumeSliderUpdateLock = false
     private fun sendQueuedPackets() {
@@ -174,11 +187,11 @@ class DashboardSession {
         }
     }
 
-    private fun selectBot(identifier: BotIdentifier) {
+    private fun selectBot(identifier: UUIDIdentifier) {
         GlobalScope.launch {
             putRequest(
                 SharedConst.INTERNAL_SET_SELECT_COOkIE,
-                BotIdentifier.serializer(),
+                UUIDIdentifier.serializer(),
                 identifier
             )
         }
@@ -195,12 +208,15 @@ class DashboardSession {
         Swal.showLoading()
         GlobalScope.launch {
             try {
-                val response = getRequest(SharedConst.INTERNAL_GET_BOTS_REQUEST, PacketBotsResponse.serializer())
+                val bots = InterPlatformSerializer.deserializeList(
+                    BotData.serializer(),
+                    getRequest(SharedConst.INTERNAL_GET_BOTS_REQUEST)
+                )
                 Swal.hideLoading()
                 Swal.getContent().append {
                     div("swal-scrool-box") {
                         ul {
-                            response.bots.forEach { botData ->
+                            bots.forEach { botData ->
                                 li {
                                     button(classes = "button is-fullwidth") {
                                         +botData.name
@@ -235,14 +251,38 @@ class DashboardSession {
         playerStopButton.disabled = disabled
     }
 
+    fun changePageContent(page: PageContent) {
+        val title = page.title
+        if (title != null)
+            document.title = title
+        GlobalScope.launch { setPageContentBody(page) }
+    }
+
     private fun TagConsumer<HTMLElement>.appendTopMenu() {
-        nav(classes = "navbar is-primary") {
+        nav("navbar is-link") {
             role = "navigation"
-            div(classes = "navbar-item") {
+            div("navbar-brand") {
+                a(classes = "navbar-item") {
+                    onClickFunction = {
+                        changePageContent(PageContent.DASHBOARD)
+
+                    }
+                    img(src = "https://bulma.io/images/bulma-logo.png") { }
+                }
+            }
+            div("navbar-item") {
                 a {
                     +"Select Bot"
                     onClickFunction = {
                         openBotSelect()
+                    }
+                }
+            }
+            div("navbar-item") {
+                a {
+                    +"Tracks"
+                    onClickFunction = {
+                        changePageContent(PageContent.TRACKS)
                     }
                 }
             }
@@ -268,7 +308,10 @@ class DashboardSession {
     private fun TagConsumer<HTMLElement>.appendFootPlayer() {
         footer("footer") {
             div("columns") {
-                button(classes = "button") { disabled = true;i("fas fa-backward") {} }
+                button(classes = "button") {
+                    disabled = true
+                    i("fas fa-backward") {}
+                }
                 playerPlayPauseButton = button(classes = "button") {
                     disabled = true
                     playPauseIcon = i("fas fa-play") {}
@@ -337,6 +380,63 @@ class DashboardSession {
         }
     }
 
+    private suspend fun setPageContentBody(dashboardPage: PageContent) {
+        when (dashboardPage) {
+            PageContent.DASHBOARD -> setDashboardContentContent()
+            PageContent.TRACKS -> setTracksContent()
+            PageContent.PROFILE -> TODO()
+        }
+    }
+
+    private fun setDashboardContentContent() {
+
+    }
+
+    private suspend fun setTracksContent() {
+        val tracks = InterPlatformSerializer.deserializeList(
+            AudioTrackData.serializer(),
+            getRequest(SharedConst.INTERNAL_GET_TRACKS_PATH)
+        )
+        contentDIV.append {
+            article("panel") {
+                p("panel-heading") { +"Tracks" }
+                div("panel-block") {
+                    p("control has-icons-left") {
+                        input(classes = "input is-primary") {
+                            type = InputType.text
+                        }
+                        span("icon is-left") {
+                            i("fas fa-search") { }
+                        }
+                    }
+                }
+                tracks.forEach { track ->
+                    a(classes = "panel-block") {
+                        span("panel-icon") {
+                            i(classes = "fas fa-book") { }
+                        }
+                        +track.title
+                    }
+                }
+            }
+            val upload = div("dropzone") {
+                id = randomId()
+            }
+
+            // @formatter:off
+            val drop = Dropzone(upload, js("""{
+                url: "${SharedConst.INTERNAL_FILE_UPLOAD}",
+                uploadMultiple: true,
+                maxFilesize: 5
+            }"""))
+            // @formatter:on
+            drop.enable()
+            console.log(drop)
+
+        }
+
+    }
+
     private fun buildPage() {
         newBody().append {
             div("sticky-top") {
@@ -344,13 +444,7 @@ class DashboardSession {
 
             }
             div("container is-fluid") {
-                div("page-content") {
-
-                    repeat(1000) {
-                        p { +"$it" }
-
-                    }
-                }
+                contentDIV = div("page-content") {}
             }
             div("foot-spacer") { }
             div("footer-fix") {
@@ -363,6 +457,7 @@ class DashboardSession {
     suspend fun start() {
         buildPage()
         socket = openSocket()
+        setPageContentBody(pageStartData.dashboardPage)
     }
 
     companion object Static {

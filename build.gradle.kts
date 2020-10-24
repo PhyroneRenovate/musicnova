@@ -76,6 +76,9 @@ dependencies {
 
     implementation("org.fusesource.jansi:jansi:1.18")
 
+    compileOnly ("org.projectlombok:lombok")
+    kapt("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
 
     //implementation("org.apache.commons:commons-text:1.9")
     //implementation("com.moandjiezana.toml:toml4j:0.7.1")

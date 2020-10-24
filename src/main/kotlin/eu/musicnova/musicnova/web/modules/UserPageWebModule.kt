@@ -15,6 +15,7 @@ import io.ktor.routing.routing
 import io.ktor.sessions.getOrSet
 import io.ktor.sessions.sessions
 import io.ktor.util.pipeline.PipelineContext
+import kotlinx.html.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Controller
 
@@ -29,7 +30,7 @@ class UserPageWebModule : WebModule {
 
     private val sendPageDebug by lazy { commandLine.debug }
 
-    suspend fun PipelineContext<Unit, ApplicationCall>.handlePage(dashboardPage: DashboardPage) {
+    suspend fun PipelineContext<Unit, ApplicationCall>.handlePage(dashboardPage: PageContent) {
         val session = with(sessionAuthManager) { getUserSession() }
         val loginStatus = if (session == null) {
             LoginStatus.LOGOUT
@@ -37,14 +38,32 @@ class UserPageWebModule : WebModule {
             LoginStatus.LOGIN
         }
         val theme = call.sessions.getOrSet { WebTheme.UNITED }
-        call.respondHtml { insert(PageTemplate(PageStartData(loginStatus, dashboardPage, theme, sendPageDebug), theme)) {} }
+        call.respondHtml {
+            insert(
+                PageTemplate(
+                    PageStartData(loginStatus, dashboardPage, theme, sendPageDebug),
+                    theme
+                )
+            ) {}
+        }
     }
 
     override fun Application.invoke() {
         routing {
-            DashboardPage.values().forEach { dashboardPage ->
+            PageContent.values().forEach { dashboardPage ->
                 get(dashboardPage.path) {
                     handlePage(dashboardPage)
+                }
+            }
+            get("api") {
+                call.respondHtml {
+                    head {}
+                    body {
+                        ul {
+                            li { a("/api/graphQL") { +"/api/graphQL" } }
+                            li { a("/api/v1/") { +"/api/v1/" } }
+                        }
+                    }
                 }
             }
         }

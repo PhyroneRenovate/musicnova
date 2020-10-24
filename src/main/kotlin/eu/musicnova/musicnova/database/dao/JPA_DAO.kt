@@ -10,6 +10,7 @@ import eu.musicnova.musicnova.bot.teamspeak.TeamspeakClientProtocolVersion
 import eu.musicnova.musicnova.permission.PermissionIdentificationStrategy
 import eu.musicnova.musicnova.permission.PersistentPermissionEntryData
 import eu.musicnova.musicnova.utils.MnRepository
+import lombok.*
 import org.hibernate.annotations.Cache
 import org.hibernate.annotations.CacheConcurrencyStrategy
 import org.springframework.data.jpa.repository.Modifying
@@ -206,16 +207,24 @@ data class PersistentWebUserSessionData(
 @Table(name = "audio_track")
 @DiscriminatorColumn(name = "type", length = 16)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@Data
 open class PersistentAudioTrackData(
     open val title: String,
     @Id open val uuid: UUID = UUID.randomUUID()
-)
+) {
+
+    @ManyToMany(mappedBy = "tracks")
+    open var playlists: List<PersistentPlaylistData> = listOf()
+}
 
 @Entity
 @DiscriminatorValue("LOCAL")
+@Data
 open class PersistentLocalAudioTrackData(
     title: String,
-    open val file: String
+    open val file: String,
+    @Column(nullable = true)
+    open val hash: ByteArray?
 ) : PersistentAudioTrackData(title)
 
 @Entity
@@ -224,6 +233,24 @@ open class PersistentRemoteAudioTrackData(
     title: String,
     open val url: String
 ) : PersistentAudioTrackData(title)
+
+fun a() {
+TestClass()
+}
+
+@Entity
+@Table(name = "playlist")
+data class PersistentPlaylistData(
+    val title: String,
+    @ManyToMany()
+    @JoinTable(
+        name = "playlist_track_ref",
+        joinColumns = [JoinColumn(name = "playlist")],
+        inverseJoinColumns = [JoinColumn(name = "track")]
+    )
+    val tracks: List<PersistentAudioTrackData>,
+    @Id val id: UUID = UUID.randomUUID()
+)
 
 @Entity
 @Table(name = "permission_entity")

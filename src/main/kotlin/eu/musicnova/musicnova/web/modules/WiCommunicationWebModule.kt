@@ -1,48 +1,43 @@
 package eu.musicnova.musicnova.web.modules
 
 import com.google.common.io.BaseEncoding
+import eu.musicnova.musicnova.audio.AudioTrackController
 import eu.musicnova.musicnova.bot.BotManager
-import eu.musicnova.musicnova.bot.ChildBot
 import eu.musicnova.musicnova.bot.MusicBot
 import eu.musicnova.musicnova.database.dao.PersistentWebUserSessionData
 import eu.musicnova.musicnova.module.WebModule
 import eu.musicnova.musicnova.utils.htmlContentType
-import eu.musicnova.musicnova.web.sesssions.SocketSessionManager
 import eu.musicnova.musicnova.web.auth.WebSessionAuthManager
 import eu.musicnova.musicnova.web.auth.WebUserLoginManager
+import eu.musicnova.musicnova.web.sesssions.SocketSessionManager
 import eu.musicnova.shared.*
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.http.ContentType
+import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
-import io.ktor.request.receive
-import io.ktor.response.respondBytes
+import io.ktor.request.*
+import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.routing.post
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
-import io.ktor.sessions.set
-import io.ktor.websocket.webSocket
+import io.ktor.sessions.*
+import io.ktor.websocket.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import lombok.extern.slf4j.Slf4j
+import org.apache.commons.io.IOUtils
+import org.apache.commons.io.output.NullOutputStream
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.nio.file.Files
 
 @Component
-class WiCommunicationWebModule : WebModule {
+class WiCommunicationWebModule(
+    val webSessionAuthManager: WebSessionAuthManager,
+    val webUserAuthManager: WebUserLoginManager,
+    val aBotManager: BotManager,
+    val sessionManager: SocketSessionManager,
+    val trackController: AudioTrackController
+) : WebModule {
 
-    @Autowired
-    lateinit var webSessionAuthManager: WebSessionAuthManager
-
-    @Autowired
-    lateinit var webUserAuthManager: WebUserLoginManager
-
-    @Autowired
-    lateinit var abotManager: BotManager
-
-    @Autowired
-    lateinit var sessionManager: SocketSessionManager
 
     private val logger = LoggerFactory.getLogger(this::class.java)
     override fun Application.invoke() {
@@ -73,30 +68,29 @@ class WiCommunicationWebModule : WebModule {
 
             get(SharedConst.INTERNAL_GET_BOTS_REQUEST) {
 
-                val response = PacketBotsResponse(abotManager.all(true).map { bot ->
-                    val subID = (bot as? ChildBot)?.childID
+                val response = aBotManager.all().map { bot ->
 
                     BotData(
-                        BotIdentifierJVMExt.invoke(bot.uuid, subID), bot.name
-                            ?: ("${bot.uuid}" + if (subID != null) " - $subID" else ""),
-                        bot is ChildBot,
+                        bot.uuid.toUUIDIdentifier(), bot.name
+                            ?: bot.uuid.toString(),
                         bot is MusicBot
                     )
-                })
-                val responseBytes = InterPlatformSerializer.serialize(
-                    PacketBotsResponse.serializer(), response
+                }
+                val responseBytes = InterPlatformSerializer.serializeList(
+                    BotData.serializer(), response
                 )
                 logger.debug(
-                    "respond bot request $response-> ${
-                        BaseEncoding.base64().encode(responseBytes)
-                    } (${responseBytes.size} bytes)"
+                    "respond bot request $response " +
+                            "-> ${
+                                BaseEncoding.base64().encode(responseBytes)
+                            } (${responseBytes.size} bytes) [${responseBytes.joinToString(",")}]"
                 )
 
                 call.respondBytes(responseBytes, InterPlatformSerializer.htmlContentType)
             }
 
             put(SharedConst.INTERNAL_SET_SELECT_COOkIE) {
-                call.sessions.set(InterPlatformSerializer.deserialize(BotIdentifier.serializer(), call.receive()))
+                call.sessions.set(InterPlatformSerializer.deserialize(UUIDIdentifier.serializer(), call.receive()))
                 call.respondBytes(byteArrayOf(), ContentType.Application.ProtoBuf)
             }
 
@@ -104,8 +98,21 @@ class WiCommunicationWebModule : WebModule {
                 TODO("implement")
             }
 
+            post(SharedConst.INTERNAL_FILE_UPLOAD) {
+
+                val inStream = call.receiveStream()
+                println(call.request.headers.names())
+                IOUtils.copy(inStream, NullOutputStream())
+                call.respond(HttpStatusCode.Accepted, "ok")
+            }
+
             get(SharedConst.INTERNAL_GET_TRACKS_PATH) {
-                TODO()
+                val bytes = InterPlatformSerializer.serializeList(
+                    AudioTrackData.serializer(),
+                    trackController.allTracks()
+                        .map { trackDAO -> AudioTrackData(trackDAO.uuid.toUUIDIdentifier(), trackDAO.title) }
+                )
+                call.respondBytes(bytes, ContentType.Application.ProtoBuf)
             }
 
             webSocket(SharedConst.SOCKET_PATH) {
@@ -131,7 +138,7 @@ class WiCommunicationWebModule : WebModule {
     inner class WebSocketCommunicationAdapter(
         private val webSocket: DefaultWebSocketSession,
         loginSession: PersistentWebUserSessionData,
-        selectedBot: BotIdentifier?
+        selectedBot: UUIDIdentifier?
     ) : CommunicationAdapter {
         private val session: SocketSessionManager.CommunicationSession =
             sessionManager.CommunicationSession(this, loginSession, selectedBot)

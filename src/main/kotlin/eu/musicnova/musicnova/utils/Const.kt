@@ -4,7 +4,7 @@ object Const {
     const val ROOT_BYPASS_FLAG = "--imRunningAsRootItIsEvilAndIKnowIt"
     const val DISABLE_SENTRY_FLAG = "--disable-sentry"
 
-    const val MN_PROPERTY_PREFIX = "mn"
+    const val MN_PROPERTY_PREFIX = "musicnova"
     const val INTERACTIVE_PROPERTY = "terminal.enabled"
     const val INTERACTIVE_PROPERTY_FULL_NAME = "$MN_PROPERTY_PREFIX.$INTERACTIVE_PROPERTY"
 

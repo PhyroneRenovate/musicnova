@@ -1,12 +1,21 @@
 package eu.musicnova.shared
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 
 object InterPlatformSerializer {
 
-    fun <DATA> serialize(kSerializer: KSerializer<DATA>,data: DATA): ByteArray = Json.encodeToString(kSerializer,data).encodeToByteArray()
+    private val proto = ProtoBuf {
+        encodeDefaults = false
+    }
 
-    fun <DATA> deserialize(kSerializer: KSerializer<DATA>, bytes: ByteArray) = Json.decodeFromString(kSerializer,bytes.decodeToString())
+    fun <DATA> serialize(kSerializer: KSerializer<DATA>, data: DATA): ByteArray =
+        proto.encodeToByteArray(kSerializer, data)
+
+    fun <DATA> deserialize(kSerializer: KSerializer<DATA>, bytes: ByteArray) =
+        proto.decodeFromByteArray(kSerializer, bytes)
+
+
+
 
 }

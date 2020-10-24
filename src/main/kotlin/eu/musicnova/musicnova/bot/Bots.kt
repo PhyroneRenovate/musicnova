@@ -28,33 +28,14 @@ interface TerminalConfigurable {
     }
 }
 
-interface ParentBot : Bot {
-    val children: Set<ChildBot>
-    fun getChild(id: Long): ChildBot?
-}
 
-interface ChildBot : Bot {
-    val childID: Long?
-    val parentBot: ParentBot
-}
+
 
 
 interface MusicBot : Bot {
     val audioController: AudioController
 }
 
-interface DiscordBot : Bot
-
-
-interface DiscordMultiGuildBot : DiscordBot, ParentBot {
-    override val children: Set<DiscordGuildSubBot>
-    override fun getChild(id: Long): DiscordGuildSubBot?
-}
-
-interface DiscordGuildSubBot : DiscordGuildBot<DiscordGuildConnectionData>, ChildBot
-
-interface DiscordSingleGuildBot : DiscordGuildBot<CombinedDiscordConnectionData>
-
-interface DiscordGuildBot<T : DiscordGuildConnectionData> : MusicBot
+interface DiscordBot : MusicBot
 
 interface TeamspeakBot : MusicBot

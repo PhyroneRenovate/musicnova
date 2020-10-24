@@ -11,26 +11,29 @@ import com.uchuhimo.konf.source.properties.toProperties
 import com.uchuhimo.konf.source.toml.toToml
 import com.uchuhimo.konf.source.xml.toXml
 import com.uchuhimo.konf.source.yaml.toYaml
+import lombok.Cleanup
+import lombok.experimental.SuperBuilder
 import java.io.*
 import java.util.*
 
 typealias Konf = Config
 
+@SuperBuilder
 class ConfigWrapper(
-        var config: Konf = Konf()
+    var config: Konf = Konf()
 ) : Konf {
     constructor(init: Config.() -> Unit) : this(Konf(init))
 
     override fun withLoadTrigger(
-            description: String,
-            trigger: (config: Config, load: (source: Source) -> Unit) -> Unit
+        description: String,
+        trigger: (config: Config, load: (source: Source) -> Unit) -> Unit
     ) = config.withLoadTrigger(description, trigger)
 
     override fun withSource(source: Source) = config.withSource(source)
 
     fun load(file: File) = load(FileInputStream(file), file.name)
     fun load(stream: InputStream, name: String) =
-            load(stream, ConfigFormat.findByEndingOrNull(name.split(".").last()) ?: fallbackFormat)
+        load(stream, ConfigFormat.findByEndingOrNull(name.split(".").last()) ?: fallbackFormat)
 
     fun load(stream: InputStream, format: ConfigFormat) {
         config = format.load(config, stream)
@@ -38,10 +41,9 @@ class ConfigWrapper(
 
     fun save(stream: OutputStream, format: ConfigFormat) = format.save(config, stream)
     fun save(stream: OutputStream, name: String) =
-            save(stream, ConfigFormat.findByEndingOrNull(name.split(".").last()) ?: fallbackFormat)
+        save(stream, ConfigFormat.findByEndingOrNull(name.split(".").last()) ?: fallbackFormat)
 
     fun save(file: File) = save(FileOutputStream(file), file.name)
-
 
     override val itemWithNames: List<Pair<Item<*>, String>>
         get() = config.itemWithNames

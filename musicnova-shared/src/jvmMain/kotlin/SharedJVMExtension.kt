@@ -2,14 +2,24 @@
 
 package eu.musicnova.shared
 
+import java.nio.ByteBuffer
 import java.util.*
 
-val UUIDTranslatable.uuid: UUID
-    get() = UUID(mostSignificantBits, leastSignificantBits)
+val UUIDIdentifier.uuid: UUID
+    get() = uuidFromBytes(this.data)
 
-object BotIdentifierJVMExt {
-    @JvmOverloads
-    operator fun invoke(uuid: UUID, subID: Long? = null) = BotIdentifier(uuid.mostSignificantBits, uuid.leastSignificantBits, subID)
+fun UUID.toUUIDIdentifier(): UUIDIdentifier =
+    UUIDIdentifier(toByteArray()) //UUIDIdentifier(mostSignificantBits,leastSignificantBits)
+
+private fun UUID.toByteArray(): ByteArray {
+    val buffer = ByteBuffer.wrap(ByteArray(16))
+    buffer.putLong(mostSignificantBits)
+    buffer.putLong(leastSignificantBits)
+    return buffer.array()
 }
 
-fun UUID.toUUIDIdentifier() = UUIDIdentifier(mostSignificantBits,leastSignificantBits)
+
+private fun uuidFromBytes(byteArray: ByteArray): UUID {
+    val buffer = ByteBuffer.wrap(byteArray)
+    return UUID(buffer.long, buffer.long)
+}

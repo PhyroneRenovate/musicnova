@@ -36,8 +36,7 @@ class MusicNovaAudioProvider {
     lateinit var audioControllerDatabase: AudioContollerDatabase
 
     @Autowired
-    @Qualifier(Const.BEAN_AUDIO_TRACK_FOLDER)
-    lateinit var localTrackFolder :File
+    lateinit var audioTrackController: AudioTrackController
 
     private val localAudioSource = LocalAudioSourceManager()
 
@@ -115,7 +114,7 @@ class MusicNovaAudioProvider {
 
         suspend fun playTrack(track: PersistentAudioTrackData) {
             when (track) {
-                is PersistentLocalAudioTrackData -> playFile(File(localTrackFolder, track.file), track.title)
+                is PersistentLocalAudioTrackData -> playFile(audioTrackController.localTrackFile(track.file), track.title)
                 is PersistentRemoteAudioTrackData -> playStream(track.url)
                 else -> throw IllegalArgumentException("unsupported track type: ${track::class.java.name}")
             }

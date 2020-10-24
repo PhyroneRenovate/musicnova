@@ -25,7 +25,7 @@ class SocketSessionManager {
     inner class CommunicationSession(
         private val adapter: WiCommunicationWebModule.CommunicationAdapter,
         private val session: PersistentWebUserSessionData,
-        selectBot: BotIdentifier?
+        selectBot: UUIDIdentifier?
     ) {
         private var currentBot: Bot? = selectBot?.toBot()
             set(value) {
@@ -51,7 +51,6 @@ class SocketSessionManager {
             GlobalScope.launch {
                 adapter.sendPacket(WsPacketUpdateBotInfo(BotData(
                         bot.serializableIdentifier(), bot.name ?: bot.uuid.toString(),
-                        bot is ChildBot,
                         bot is MusicBot
                 )))
                 if (bot is MusicBot) {
@@ -84,7 +83,7 @@ class SocketSessionManager {
         )
 
 
-        private fun BotManager.findBot(identifier: BotIdentifier) = findBot(identifier.uuid, identifier.subID)
+        private fun BotManager.findBot(identifier: UUIDIdentifier) = findBot(identifier.uuid)
 
         private fun handlePacketPlayStream(packet: WsPacketBotPlayerPlayStream) {
             onMusicBot { bot ->
@@ -113,7 +112,7 @@ class SocketSessionManager {
         }
 
         @Suppress("NOTHING_TO_INLINE")
-        private inline fun BotIdentifier.toBot() = botManager.findBot(uuid, subID)
+        private inline fun UUIDIdentifier.toBot() = botManager.findBot(uuid)
 
         fun handlePacketBotPlayerUpdateIsPlaying(packet: WsPacketBotPlayerUpdateIsPlaying) {
             onMusicBot { bot ->

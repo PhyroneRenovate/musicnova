@@ -2,9 +2,10 @@ package eu.musicnova.frontend
 
 import eu.musicnova.frontend.dashboard.DashboardSession
 import eu.musicnova.frontend.login.buildLoginWindow
-import eu.musicnova.frontend.thrd.Bulma
-import eu.musicnova.frontend.thrd.Swal
-import eu.musicnova.frontend.thrd.fire
+import eu.musicnova.frontend.externals.Bulma
+import eu.musicnova.frontend.externals.Dropzone
+import eu.musicnova.frontend.externals.Swal
+import eu.musicnova.frontend.externals.fire
 import eu.musicnova.frontend.utils.pageStartData
 import eu.musicnova.shared.LoginStatus
 import kotlinx.browser.window
@@ -16,11 +17,14 @@ fun main() {
     console.log("Started...")
     console.dir(pageStartData)
     console.log("BulmaJS Version: ${Bulma.default.VERSION}")
+    configureExternals()
     window.onload = { onLoad() }
 }
-fun startMainPage(){
+
+fun startMainPage() {
     GlobalScope.launch { DashboardSession().start() }
 }
+
 fun onLoad() {
 
     when (pageStartData.loginStatus) {
@@ -37,3 +41,6 @@ fun onLoad() {
     }
 }
 
+fun configureExternals() {
+    Dropzone.autoDiscover = false
+}

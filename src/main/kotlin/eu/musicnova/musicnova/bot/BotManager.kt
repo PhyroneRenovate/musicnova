@@ -29,23 +29,10 @@ class BotManager {
 
     /**
      *
-     * @param includeChildren Boolean resolve children of parentbots (f.e. discord)
      * @return List<Bot> a copy of all bots as a list
      */
-    @JvmOverloads
-    fun all(includeChildren: Boolean = true): List<Bot> {
-        val response = mutableListOf<Bot>()
+    fun all(): List<Bot> = bots.sortedBy { bot -> bot.name }
 
-        bots.sortedBy { bot -> bot.name }.forEach { bot ->
-            response += bot
-            if ((bot is ParentBot) && includeChildren) {
-                bot.children.forEach { childBot ->
-                    response.add(childBot)
-                }
-            }
-        }
-        return response
-    }
 
     fun registerBot(bot: Bot) {
         bots.add(bot)
@@ -63,24 +50,19 @@ class BotManager {
         }
     }
 
-    fun findBot(name: String): Bot? = bots.find { bot -> name.equals(bot.uuid.toString(), true) }
-            ?: bots.find { bot -> name.equals(bot.name, true) }
-
-    fun findBot(uuid: UUID, subID: Long?): Bot? {
-        val bot = bots.find { bot -> bot.uuid == uuid }
-        return if (subID != null) {
-            if (bot is ParentBot) {
-                bot.getChild(subID)
-            } else {
-                throw IllegalArgumentException("cant select a childbot from non parent bot")
-            }
-        } else {
-            bot
+    fun findBot(name: String): Bot? {
+        val uuid = kotlin.runCatching { UUID.fromString(name) }.getOrNull()
+        if (uuid != null) {
+            val bot = findBot(uuid)
+            if (bot != null) return bot
         }
+        return bots.find { bot -> bot.name.equals(name, true) }
     }
 
+    fun findBot(uuid: UUID): Bot? = bots.find { bot -> bot.uuid == uuid }
+
     private val botNameArg = "UUIDorUsername"
-    fun CommandContext<Unit>.getBot() = findBot(getArgument(botNameArg))
+    fun CommandContext<Unit>.getBot() = findBot(getArgument<String>(botNameArg))
 
     @Autowired
     lateinit var terminalCommandDispatcher: TerminalCommandDispatcher
@@ -142,12 +124,14 @@ class BotManager {
                         }
                         argument("value", GreedyStringArgument) {
                             suggest {
-                                it.getBot()?.getTerminalProperty(it.getArgument("property"))?.suggest()?.forEach { suggestion ->
-                                    suggest(suggestion)
-                                }
+                                it.getBot()?.getTerminalProperty(it.getArgument("property"))?.suggest()
+                                    ?.forEach { suggestion ->
+                                        suggest(suggestion)
+                                    }
                             }
                             runs {
-                                it.getBot()?.getTerminalProperty(it.getArgument("property"))?.set(it.getArgument("value"))
+                                it.getBot()?.getTerminalProperty(it.getArgument("property"))
+                                    ?.set(it.getArgument("value"))
                             }
                         }
 

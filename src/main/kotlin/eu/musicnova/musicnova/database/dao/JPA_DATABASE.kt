@@ -40,9 +40,13 @@ interface WebUserSessionDatabase : MnRepository<PersistentWebUserSessionData, St
 }
 
 
-interface AudioTrackDatabase : MnRepository<PersistentAudioTrackData, Long> {
+interface AudioTrackDatabase : MnRepository<PersistentAudioTrackData, UUID> {
     fun findByTitle(name: String): PersistentAudioTrackData?
     fun getAllByOrderByTitleAsc(): List<PersistentAudioTrackData>
+}
+interface LocalAudioTrackDatabase : MnRepository<PersistentLocalAudioTrackData, UUID> {
+    fun findByTitle(name: String): PersistentLocalAudioTrackData?
+    fun getAllByOrderByTitleAsc(): List<PersistentLocalAudioTrackData>
 }
 
 interface WebUserDatabase : MnRepository<PersistentWebUserData, UUID> {

@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.serialization") version "1.4.0"
+    kotlin("plugin.serialization") version "1.4.10"
 }
 
 group = "eu.musicnova"
@@ -9,7 +9,7 @@ group = "eu.musicnova"
 repositories {
     mavenCentral()
 }
-val ser_version = "1.0.0-RC2"
+val ser_version = "1.0.0"
 kotlin {
     /* Targets configuration omitted. 
     *  To find out how to configure the targets, please follow the link:
@@ -25,10 +25,14 @@ kotlin {
             }
         }
         val commonTest by getting {
+            repositories{
+                maven("https://kotlinlang.org/")
+            }
             dependencies {
+                implementation(kotlin("stdlib-common"))
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-
+                implementation(kotlin("test"))
 
             }
         }
@@ -45,6 +49,15 @@ kotlin {
                 //api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf-js:$ser_version")
             }
         }
+        compilations["test"].defaultSourceSet {
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                implementation(kotlin("stdlib-js"))
+                implementation(kotlin("test-js"))
+            }
+        }
     }
     jvm {
         compilations["main"].defaultSourceSet {
@@ -56,6 +69,18 @@ kotlin {
 
                 //api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$ser_version")
                 //api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$ser_version")
+            }
+        }
+        compilations["test"].defaultSourceSet {
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                implementation(kotlin("stdlib-jdk8"))
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+                implementation(kotlin("test-junit"))
+                implementation(kotlin("test-junit"))
             }
         }
     }

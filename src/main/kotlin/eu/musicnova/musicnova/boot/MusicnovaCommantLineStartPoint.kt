@@ -2,6 +2,7 @@
 
 package eu.musicnova.musicnova.boot
 
+import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
 import com.github.lalyos.jfiglet.FigletFont
@@ -80,8 +81,14 @@ class MusicnovaCommantLineStartPoint : Runnable, StartConfiguration {
     private fun isRoot(process: OSProcess) = process.userID?.toIntOrNull() == 0
 
     override fun run() {
+        val loggerFactory = (LoggerFactory.getILoggerFactory() as? LoggerContext)
+        val rootLogger = loggerFactory?.getLogger(Logger.ROOT_LOGGER_NAME)
         if (debug) {
-            setDebugFlags()
+            val debugLevel = Level.TRACE
+            System.setProperty("logging.level.root", debugLevel.levelStr)
+            System.setProperty("logging.level.org.springframework", debugLevel.levelStr)
+            System.setProperty("spring.jpa.show-sql", "true")
+            rootLogger?.level = debugLevel
         }
         if (!disableSentry) {
             println("MusicNova sends error data automatically to sentry.phyrone.de")
@@ -91,9 +98,7 @@ class MusicnovaCommantLineStartPoint : Runnable, StartConfiguration {
                 options.isEnableUncaughtExceptionHandler = true
             }
         } else {
-            (LoggerFactory.getILoggerFactory() as? LoggerContext)
-                ?.getLogger(Logger.ROOT_LOGGER_NAME)
-                ?.detachAppender("SENTRY")
+            rootLogger?.detachAppender("SENTRY")
         }
 
         if (interactive)
@@ -111,15 +116,10 @@ class MusicnovaCommantLineStartPoint : Runnable, StartConfiguration {
             context.beanFactory.registerSingleton(Const.BEAN_NAME_CLI_PRESENT, InitCommandLineBeanPresent(this))
         })
 
-        val springAppContext = app.run()
+        val springAppContext = app.run("--help")
 
         checkRoot(springAppContext.getBean())
 
-    }
-
-    private fun setDebugFlags() {
-        System.setProperty("logging.level.org.springframework", "DEBUG")
-        System.setProperty("spring.jpa.show-sql", "true")
     }
 
 }

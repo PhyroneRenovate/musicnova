@@ -10,11 +10,13 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import eu.musicnova.musicnova.MusicnovaApplication
 import eu.musicnova.musicnova.bot.Bot
 import eu.musicnova.musicnova.bot.BotEventListener
-import eu.musicnova.musicnova.bot.ChildBot
-import eu.musicnova.shared.BotIdentifierJVMExt
 import eu.musicnova.shared.InterPlatformSerializer
+import eu.musicnova.shared.toUUIDIdentifier
 import io.ktor.http.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.support.JpaEntityInformation
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository
@@ -152,7 +154,7 @@ class StringLineOutputStream(private val block: (String) -> Unit) : ByteArrayOut
 
 inline fun <reified T> Any?.cast(): T? = this as? T
 
-fun Bot.serializableIdentifier() = BotIdentifierJVMExt(this.uuid, this.cast<ChildBot>()?.childID)
+fun Bot.serializableIdentifier() = this.uuid.toUUIDIdentifier()
 
 val InterPlatformSerializer.htmlContentType: ContentType
-    get() = ContentType.Application.Json
+    get() = ContentType.Application.ProtoBuf

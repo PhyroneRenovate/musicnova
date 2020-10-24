@@ -58,10 +58,11 @@ private fun loadPageStartData(): PageStartData {
     return PageStartData.fromBytes(pageStartBytes)
 }
 
-suspend fun <RESPONSE> getRequest(url: String, kSerializer: KSerializer<RESPONSE>) = InterPlatformSerializer.deserialize(
-    kSerializer,
-    getRequest(url)
-)
+suspend fun <RESPONSE> getRequest(url: String, kSerializer: KSerializer<RESPONSE>) =
+    InterPlatformSerializer.deserialize(
+        kSerializer,
+        getRequest(url)
+    )
 
 suspend fun getRequest(url: String) = suspendCoroutine<ByteArray> { lock ->
     val httpRequest = prepareHttpRequest()
@@ -69,12 +70,17 @@ suspend fun getRequest(url: String) = suspendCoroutine<ByteArray> { lock ->
     httpRequest.open("GET", url)
     httpRequest.send()
 }
-suspend fun <REQUEST,RESPONSE>postRequest(
+
+suspend fun <REQUEST, RESPONSE> postRequest(
     url: String,
-    requestSerializer:KSerializer<REQUEST>,
-    responseSerializer:KSerializer<RESPONSE>,
+    requestSerializer: KSerializer<REQUEST>,
+    responseSerializer: KSerializer<RESPONSE>,
     request: REQUEST
-) =InterPlatformSerializer.deserialize(responseSerializer, postRequest(url,InterPlatformSerializer.serialize(requestSerializer,request)))
+) = InterPlatformSerializer.deserialize(
+    responseSerializer,
+    postRequest(url, InterPlatformSerializer.serialize(requestSerializer, request))
+)
+
 suspend fun postRequest(
     url: String,
     request: ByteArray
@@ -125,8 +131,8 @@ fun XMLHttpRequest.continueOnResponse(lock: Continuation<ByteArray>) {
                 if (debug) {
                     console.info(
                         this,
-                        "recieved packet bytes deconding now... (lenght: ${bytes.size}bytes)",
-                        bytes,
+                        "recieved packet bytes (lenght: ${bytes.size}bytes)",
+                        bytes.joinToString(","),
                         window.btoa(bytes.unsafeCast<String>())
                     )
                 }

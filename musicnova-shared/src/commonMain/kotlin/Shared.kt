@@ -16,6 +16,7 @@ object SharedConst {
     const val INTERNAL_LOGIN_PATH = "$INTERNAL_API_PATH/login"
     const val INTERNAL_LOGOUT_PATH = "$INTERNAL_API_PATH/logout"
     const val INTERNAL_OTP_PATH = "$INTERNAL_API_PATH/otp"
+    const val INTERNAL_FILE_UPLOAD = "$INTERNAL_API_PATH/upload"
     const val INTERNAL_SET_SELECT_COOkIE = "$INTERNAL_API_PATH/setBotSelectCookie"
     const val INTERNAL_GET_TRACKS_PATH = "$INTERNAL_API_PATH/getTracks"
 
@@ -29,7 +30,7 @@ object SharedConst {
 @Serializable
 data class PageStartData(
     val loginStatus: LoginStatus,
-    val dashboardPage: DashboardPage,
+    val dashboardPage: PageContent,
     val theme: WebTheme,
     val debug: Boolean = false
 ) {
@@ -141,7 +142,7 @@ data class WsPacketClose(
 
 @Serializable
 data class WsPacketUpdateSelectedBot(
-    val botIdentifier: BotIdentifier?
+    val botIdentifier: UUIDIdentifier?
 ) : WsPacket()
 
 @Serializable
@@ -211,17 +212,12 @@ data class PacketLoginResponse(
     val status: LoginStatusResponse
 )
 
-@Serializable
-class PacketBotsResponse(
-    val bots: List<BotData> = listOf()
-)
-
-@Serializable
-data class PacketListTracksResponse(
-    val tracks: List<AudioTrackData>
-)
-
 /* Data container */
+
+@Serializable
+data class LargePacketHeader(
+    val size: Int
+)
 
 @Serializable
 data class AudioTrackData(
@@ -231,10 +227,9 @@ data class AudioTrackData(
 
 @Serializable
 data class BotData(
-    val identifier: BotIdentifier,
+    val identifier: UUIDIdentifier,
     val name: String,
-    val isChildBot: Boolean,
-    val isMusicBot: Boolean
+    val isMusicBot: Boolean = true
 )
 
 @Serializable
@@ -245,28 +240,28 @@ data class ContentInfomation(
 )
 
 @Serializable
-data class BotIdentifier(
-    override val mostSignificantBits: Long,
-    override val leastSignificantBits: Long,
-    val subID: Long? = null
-) : UUIDTranslatable {
-    constructor(identifier: UUIDTranslatable, subID: Long? = null) : this(
-        identifier.mostSignificantBits,
-        identifier.leastSignificantBits,
-        subID
-    )
-}
-
-@Serializable
 data class UUIDIdentifier(
-    override val mostSignificantBits: Long,
-    override val leastSignificantBits: Long
-) : UUIDTranslatable {
+    val data: ByteArray
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
 
+        other as UUIDIdentifier
+
+        if (!data.contentEquals(other.data)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return data.contentHashCode()
+    }
 }
 
-enum class DashboardPage(val path: String) {
-    DASHBOARD("/"), PROFILE("/profile")
+
+enum class PageContent(val path: String, val title: String? = null) {
+    DASHBOARD("/", "Dashboard"), PROFILE("/profile", "Profile"), TRACKS("/tracks")
 }
 
 enum class LoginStatus {

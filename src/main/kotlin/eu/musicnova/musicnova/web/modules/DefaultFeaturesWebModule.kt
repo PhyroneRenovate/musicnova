@@ -1,8 +1,8 @@
 package eu.musicnova.musicnova.web.modules
 
 import eu.musicnova.musicnova.module.WebModule
-import eu.musicnova.shared.BotIdentifier
 import eu.musicnova.shared.InterPlatformSerializer
+import eu.musicnova.shared.UUIDIdentifier
 import eu.musicnova.shared.WebTheme
 import io.ktor.application.Application
 import io.ktor.application.install
@@ -14,6 +14,7 @@ import io.ktor.sessions.SessionSerializer
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
 import io.ktor.websocket.WebSockets
+import kotlinx.serialization.builtins.serializer
 import org.slf4j.event.Level
 import org.springframework.stereotype.Component
 import java.util.*
@@ -56,15 +57,13 @@ class DefaultFeaturesWebModule : WebModule {
                 serializer = ThemeOrdinalSerializer
                 cookie.domain = null
                 cookie.encoding = CookieEncoding.RAW
-                cookie.secure = false
-                cookie.httpOnly=true
+                cookie.httpOnly = true
             }
-            cookie<BotIdentifier>("musicnova-selected-bot") {
+            cookie<UUIDIdentifier>("musicnova-selected-bot") {
                 serializer = BotIdentifierSerializer
                 cookie.domain = null
                 cookie.encoding = CookieEncoding.URI_ENCODING
-                cookie.secure = false
-                cookie.httpOnly=true
+                cookie.httpOnly = true
             }
         }
     }
@@ -77,10 +76,12 @@ class DefaultFeaturesWebModule : WebModule {
         override fun serialize(theme: WebTheme): String = theme.ordinal.toString()
     }
 
-    private object BotIdentifierSerializer : SessionSerializer<BotIdentifier> {
+    private object BotIdentifierSerializer : SessionSerializer<UUIDIdentifier> {
 
-        override fun deserialize(text: String): BotIdentifier = InterPlatformSerializer.deserialize(BotIdentifier.serializer(), Base64.getDecoder().decode(text))
+        override fun deserialize(text: String) =
+            InterPlatformSerializer.deserialize(UUIDIdentifier.serializer(), Base64.getDecoder().decode(text))
 
-        override fun serialize(session: BotIdentifier): String = Base64.getEncoder().encodeToString(InterPlatformSerializer.serialize(BotIdentifier.serializer(), session))
+        override fun serialize(session: UUIDIdentifier): String =
+            Base64.getEncoder().encodeToString(InterPlatformSerializer.serialize(UUIDIdentifier.serializer(), session))
     }
 }

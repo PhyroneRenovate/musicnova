@@ -1,4 +1,4 @@
-package eu.musicnova.frontend.thrd
+package eu.musicnova.frontend.externals
 
 import org.w3c.dom.HTMLElement
 
