@@ -74,7 +74,7 @@ dependencies {
 
     //implementation("org.casbin:casbin-spring-boot-starter:0.0.9")
 
-    implementation("org.fusesource.jansi:jansi:1.18")
+    implementation("org.fusesource.jansi:jansi:2.0.1")
 
     compileOnly ("org.projectlombok:lombok")
     kapt("org.projectlombok:lombok")
