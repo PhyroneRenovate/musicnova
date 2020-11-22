@@ -111,7 +111,7 @@ dependencies {
     implementation("com.github.oshi:oshi-core:5.2.5")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.11.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+")
-    implementation("com.google.zxing:core:3.4.0")
+    implementation("com.google.zxing:core:3.4.1")
     implementation("org.greenrobot:eventbus:3.2.0")
     //implementation("com.github.pemistahl:lingua:1.0.1")
     implementation("de.sfuhrm:radiobrowser4j:2.0.3")
