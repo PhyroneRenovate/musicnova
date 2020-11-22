@@ -32,6 +32,6 @@
     "dropzone": "^5.7.2",
     "ionicons": "^5.1.2",
     "spinkit": "^2.0.1",
-    "sweetalert2": "^9.17.2"
+    "sweetalert2": "^10.0.0"
   }
 }
