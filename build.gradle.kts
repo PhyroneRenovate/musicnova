@@ -161,7 +161,7 @@ dependencies {
     implementation("org.python:jython:2.7.2")
     implementation("org.luaj:luaj-jse:3.0.1")
     implementation("de.swirtz:ktsRunner:0.0.8")
-    implementation("com.zaxxer:nuprocess:2.0.0")
+    implementation("com.zaxxer:nuprocess:2.0.1")
 
     implementation("com.github.marceloaguiarr:valkyrie:1.2.0")
 
