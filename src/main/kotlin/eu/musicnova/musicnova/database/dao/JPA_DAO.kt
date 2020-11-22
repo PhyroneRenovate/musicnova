@@ -121,10 +121,6 @@ data class PersistentAudioControllerData(
     var volume: Int
 )
 
-data class PeristentAudioTrackData(
-    var name: String
-)
-
 @Entity
 @Table(name = "web_user")
 data class PersistentWebUserData(
@@ -207,7 +203,6 @@ data class PersistentWebUserSessionData(
 @Table(name = "audio_track")
 @DiscriminatorColumn(name = "type", length = 16)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Data
 open class PersistentAudioTrackData(
     open val title: String,
     @Id open val uuid: UUID = UUID.randomUUID()
@@ -219,7 +214,6 @@ open class PersistentAudioTrackData(
 
 @Entity
 @DiscriminatorValue("LOCAL")
-@Data
 open class PersistentLocalAudioTrackData(
     title: String,
     open val file: String,
@@ -234,9 +228,6 @@ open class PersistentRemoteAudioTrackData(
     open val url: String
 ) : PersistentAudioTrackData(title)
 
-fun a() {
-TestClass()
-}
 
 @Entity
 @Table(name = "playlist")
