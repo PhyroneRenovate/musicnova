@@ -9,7 +9,7 @@ group = "eu.musicnova"
 repositories {
     mavenCentral()
 }
-val ser_version = "1.0.0"
+val ser_version = "1.0.1"
 kotlin {
     /* Targets configuration omitted. 
     *  To find out how to configure the targets, please follow the link:
