@@ -146,7 +146,7 @@ dependencies {
         implementation("org.jetbrains.exposed", name, "0.27.1")
     }
 
-    //kapt("org.inferred:freebuilder:2.6.2")
+    //kapt("org.inferred:freebuilder:2.7.0")
     implementation("org.inferred:freebuilder:2.6.1")
 
     implementation("org.jline:jline:3.17.1")
