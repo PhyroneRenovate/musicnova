@@ -54,7 +54,7 @@ class ConfigWrapper(
         get() = config.name
     override val parent: Konf?
         get() = config.parent
-    override val sources: Deque<Source>
+    override val sources: List<Source>
         get() = config.sources
     override val specs: List<Spec>
         get() = config.specs

@@ -38,7 +38,6 @@ module.exports = {
                         loader: MiniCssExtractPlugin.loader,
                         options: {
                             publicPath: '/assets/styles',
-                            hmr: process.env.NODE_ENV === 'development'
                         }
                     },
                     'css-loader',
@@ -52,7 +51,6 @@ module.exports = {
                         loader: MiniCssExtractPlugin.loader,
                         options: {
                             publicPath: '/assets/styles',
-                            hmr: process.env.NODE_ENV === 'development'
                         }
                     },
                     'css-loader'

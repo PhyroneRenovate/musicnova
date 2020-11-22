@@ -96,12 +96,11 @@ class TeamspeakIdenityManager {
                 }
                 literal("generate") {
                     fun generateIdentityTerm(targetLevel: Int, name: String?) {
-                        val progressBar = ProgressBar("Generate Idenity", targetLevel.toLong(), ProgressBarStyle.COLORFUL_UNICODE_BLOCK)
                         val tsIdentity = generateInSteps(targetLevel) { reachedLevel ->
-                            progressBar.stepTo(reachedLevel.toLong())
+                  println("identity $name reached level $reachedLevel")
                         }
                         val identityData = PersistentTeamspeakIdentity(tsIdentity, name)
-                        progressBar.close()
+
                         identityDatabase.save(identityData)
                         suggestioncache.invalidateAll()
                         val table = AsciiTable()
@@ -164,22 +163,12 @@ class TeamspeakIdenityManager {
                                 if (identitydata == null) {
                                     println("identity not found")
                                 } else {
-                                    val progressBar = ProgressBar("Improving", 1, ProgressBarStyle.COLORFUL_UNICODE_BLOCK)
-                                    progressBar.extraMessage = "Loading"
                                     val localTsIdentity = identitydata.identity
-                                    progressBar.step()
                                     val startLevel = localTsIdentity.securityLevel
-                                    progressBar.maxHint((startLevel - targetLevel + 1).toLong())
-                                    progressBar.extraMessage = ""
                                     localTsIdentity.improveInSteps(targetLevel) { reachedLevel ->
-
-                                        progressBar.stepTo((reachedLevel-startLevel  + 1).toLong())
-                                        progressBar.extraMessage = "Saving"
                                         identitydata.identity = localTsIdentity
                                         identityDatabase.save(identitydata)
-                                        progressBar.extraMessage = ""
                                     }
-                                    progressBar.close()
                                     suggestioncache.invalidateAll()
                                 }
                             }

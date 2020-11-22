@@ -9,8 +9,7 @@ import de.phyrone.brig.wrapper.*
 import de.vandermeer.asciitable.AsciiTable
 import de.vandermeer.skb.interfaces.document.TableRowStyle
 import eu.musicnova.musicnova.utils.TerminalCommandDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -18,6 +17,7 @@ import java.lang.IllegalArgumentException
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
+import javax.inject.Inject
 import kotlin.collections.HashSet
 
 @Component
@@ -99,13 +99,17 @@ class BotManager {
                 literal("connect") {
                     runs {
                         val bot = it.getBot()
-                        bot?.connect()
+                      GlobalScope.launch {
+                            bot?.connect()
+                        }
                     }
                 }
                 literal("disconnect") {
                     runs {
                         val bot = it.getBot()
-                        bot?.disconnect()
+                        GlobalScope.launch {
+                            bot?.disconnect()
+                        }
                     }
                 }
                 literal("setName") {
@@ -233,7 +237,9 @@ class BotManager {
                                 val url = it.getArgument<String>("url")
                                 when (val bot = it.getBot()) {
                                     is MusicBot -> {
-                                        bot.audioController.playStream(url)
+                                        GlobalScope.launch {
+                                            bot.audioController.playStream(url)
+                                        }
                                     }
                                     null -> {
                                         println("bot not found")
