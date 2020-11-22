@@ -6,7 +6,7 @@ plugins {
     idea
     java
     id("org.springframework.boot") version "2.4.0"
-    id("io.spring.dependency-management") version "1.0.9.RELEASE"
+    id("io.spring.dependency-management") version "1.0.10.RELEASE"
     id("com.github.node-gradle.node") version "2.2.4"
     id("org.jetbrains.dokka") version "1.4.10.2"
     //id("com.github.ksoichiro.build.info") version "0.2.0"
